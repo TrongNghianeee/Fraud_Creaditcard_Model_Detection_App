@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     // UI Components
     private ImageView imagePreview;
+    private TextView textPlaceholder;
     private Button btnUpload;
     private Button btnAnalyze;
     private ProgressBar progressBar;
@@ -80,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
      * Initialize all UI components
      */
     private void initViews() {
-        imagePreview = findViewById(R.id.imagePreview);
+    imagePreview = findViewById(R.id.imagePreview);
+    textPlaceholder = findViewById(R.id.textPlaceholder);
         btnUpload = findViewById(R.id.btnUpload);
         btnAnalyze = findViewById(R.id.btnAnalyze);
         progressBar = findViewById(R.id.progressBar);
@@ -148,9 +150,11 @@ public class MainActivity extends AppCompatActivity {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             imagePreview.setImageBitmap(bitmap);
             imagePreview.setVisibility(View.VISIBLE);
+            textPlaceholder.setVisibility(View.GONE);
         } catch (IOException e) {
             Log.e(TAG, "Error loading image: " + e.getMessage());
             Toast.makeText(this, "Lỗi khi tải ảnh", Toast.LENGTH_SHORT).show();
+            textPlaceholder.setVisibility(View.VISIBLE);
         }
     }
 
@@ -160,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
     private void uploadAndScan() {
         if (selectedImageUri == null) {
             Toast.makeText(this, "Vui lòng chọn ảnh trước", Toast.LENGTH_SHORT).show();
+            textPlaceholder.setVisibility(View.VISIBLE);
             return;
         }
 

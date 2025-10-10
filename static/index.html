@@ -297,6 +297,36 @@
             word-wrap: break-word;
         }
 
+        .info-item input,
+        .info-item textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd1ff;
+            border-radius: 6px;
+            font-size: 1em;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+
+        .info-item input:focus,
+        .info-item textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+        }
+
+        .info-item textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .edit-hint {
+            color: #777;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
         .info-item.full-width {
             grid-column: 1 / -1;
         }
@@ -556,6 +586,7 @@
                     <!-- Transaction Info Only -->
                     <div id="transactionSection">
                         <h3 style="margin-bottom: 15px; color: #667eea;">💳 Thông tin giao dịch:</h3>
+                        <p class="edit-hint">✏️ Bạn có thể chỉnh sửa trực tiếp các trường bên dưới để bổ sung thông tin còn thiếu.</p>
                         <div class="transaction-info" id="transactionInfo"></div>
                         
                         <!-- Fraud Detection Section -->
@@ -603,6 +634,91 @@
 
         let selectedFile = null;
         let currentAmountUSD = null;
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function toAttributeValue(value) {
+            return escapeHtml(value ?? '');
+        }
+
+        function toTextValue(value) {
+            return escapeHtml(value ?? '');
+        }
+
+        function parseFlexibleNumber(value) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            if (typeof value === 'number') {
+                return Number.isFinite(value) ? value : null;
+            }
+
+            const trimmed = String(value).trim();
+            if (!trimmed) {
+                return null;
+            }
+
+            const hasComma = trimmed.includes(',');
+            const hasDot = trimmed.includes('.');
+            let normalized = trimmed.replace(/\s+/g, '');
+
+            if (hasComma && hasDot) {
+                if (trimmed.lastIndexOf(',') > trimmed.lastIndexOf('.')) {
+                    normalized = normalized.replace(/\./g, '').replace(/,/g, '.');
+                } else {
+                    normalized = normalized.replace(/,/g, '');
+                }
+            } else if (hasComma && !hasDot) {
+                normalized = normalized.replace(/,/g, '.');
+            } else {
+                normalized = normalized.replace(/,/g, '');
+            }
+
+            normalized = normalized.replace(/[^0-9.-]/g, '');
+
+            const dotMatches = normalized.match(/\./g);
+            if (dotMatches && dotMatches.length > 1) {
+                const segments = normalized.split('.');
+                const decimal = segments.pop();
+                normalized = segments.join('') + (decimal ? `.${decimal}` : '');
+            }
+
+            if (normalized.includes('-')) {
+                const isNegative = normalized.trim().startsWith('-');
+                normalized = normalized.replace(/-/g, '');
+                if (isNegative) {
+                    normalized = `-${normalized}`;
+                }
+            }
+
+            const result = parseFloat(normalized);
+            return Number.isFinite(result) ? result : null;
+        }
+
+        function syncAmountUsdFromInput() {
+            const amountUsdInput = document.getElementById('amountUsdInput');
+            if (!amountUsdInput) {
+                currentAmountUSD = null;
+                return;
+            }
+
+            currentAmountUSD = parseFlexibleNumber(amountUsdInput.value);
+        }
+
+        function updateFraudButtonState() {
+            fraudBtn.disabled = currentAmountUSD === null;
+        }
 
         // Click to upload
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -700,15 +816,9 @@
 
             // Display transaction info
             if (data.transaction) {
+                currentAmountUSD = null;
+                fraudBtn.disabled = true;
                 displayTransaction(data.transaction);
-                
-                // Enable fraud detection button if amount_usd is available
-                if (data.transaction.amount_usd) {
-                    currentAmountUSD = data.transaction.amount_usd;
-                    fraudBtn.disabled = false;
-                } else {
-                    fraudBtn.disabled = true;
-                }
             } else {
                 transactionInfo.innerHTML = '<p style="color: #999;">Không thể trích xuất thông tin giao dịch</p>';
                 fraudBtn.disabled = true;
@@ -719,62 +829,91 @@
         }
 
         function displayTransaction(data) {
-            const formatCurrency = (amount) => {
-                if (amount === null || amount === undefined) return 'N/A';
-                return new Intl.NumberFormat('vi-VN').format(amount);
-            };
+            const amountVndValue = toAttributeValue(data.amount_vnd);
+            const amountUsdValue = toAttributeValue(data.amount_usd);
+            const senderNameValue = toAttributeValue(data.sender_name);
+            const receiverNameValue = toAttributeValue(data.receiver_name);
+            const senderBankValue = toAttributeValue(data.sender_bank);
+            const receiverBankValue = toAttributeValue(data.receiver_bank);
+            const dateValue = toAttributeValue(data.date);
+            const timeValue = toAttributeValue(data.time);
+            const timeSecondsValue = toAttributeValue(data.time_in_seconds);
+            const transactionIdValue = toAttributeValue(data.transaction_id);
+            const transactionFeeValue = toAttributeValue(data.transaction_fee);
+            const transactionContentValue = toTextValue(data.transaction_content);
 
             transactionInfo.innerHTML = `
-                <div class="info-item highlight full-width">
-                    <div class="label">💰 Số tiền</div>
-                    <div class="value">${formatCurrency(data.amount_vnd)} VND ≈ $${data.amount_usd || 'N/A'}</div>
+                <div class="info-item highlight">
+                    <div class="label">💰 Số tiền (VND)</div>
+                    <input type="text" id="amountVndInput" value="${amountVndValue}" placeholder="Ví dụ: 15.500.000">
+                </div>
+
+                <div class="info-item highlight">
+                    <div class="label">💵 Số tiền (USD)</div>
+                    <input type="text" id="amountUsdInput" value="${amountUsdValue}" placeholder="Ví dụ: 650">
                 </div>
 
                 <div class="info-item">
                     <div class="label">👤 Người gửi</div>
-                    <div class="value">${data.sender_name || 'N/A'}</div>
+                    <input type="text" id="senderNameInput" value="${senderNameValue}" placeholder="Tên người gửi">
                 </div>
 
                 <div class="info-item">
                     <div class="label">👤 Người nhận</div>
-                    <div class="value">${data.receiver_name || 'N/A'}</div>
+                    <input type="text" id="receiverNameInput" value="${receiverNameValue}" placeholder="Tên người nhận">
                 </div>
 
                 <div class="info-item">
                     <div class="label">🏦 Ngân hàng gửi</div>
-                    <div class="value">${data.sender_bank || 'N/A'}</div>
+                    <input type="text" id="senderBankInput" value="${senderBankValue}" placeholder="Ngân hàng gửi">
                 </div>
 
                 <div class="info-item">
                     <div class="label">🏦 Ngân hàng nhận</div>
-                    <div class="value">${data.receiver_bank || 'N/A'}</div>
+                    <input type="text" id="receiverBankInput" value="${receiverBankValue}" placeholder="Ngân hàng nhận">
                 </div>
 
                 <div class="info-item">
                     <div class="label">📅 Ngày giao dịch</div>
-                    <div class="value">${data.date || 'N/A'}</div>
+                    <input type="text" id="transactionDateInput" value="${dateValue}" placeholder="dd/mm/yyyy">
                 </div>
 
                 <div class="info-item">
                     <div class="label">⏰ Thời gian</div>
-                    <div class="value">${data.time || 'N/A'}${data.time_in_seconds ? ` (${data.time_in_seconds}s)` : ''}</div>
+                    <input type="text" id="transactionTimeInput" value="${timeValue}" placeholder="hh:mm:ss">
+                </div>
+
+                <div class="info-item">
+                    <div class="label">⏱️ Thời gian (seconds)</div>
+                    <input type="text" id="transactionTimeSecondsInput" value="${timeSecondsValue}" placeholder="Ví dụ: 45210">
                 </div>
 
                 <div class="info-item">
                     <div class="label">🔖 Mã giao dịch (MGD)</div>
-                    <div class="value">${data.transaction_id || 'N/A'}</div>
+                    <input type="text" id="transactionIdInput" value="${transactionIdValue}" placeholder="Mã giao dịch">
                 </div>
 
                 <div class="info-item">
                     <div class="label">💳 Phí giao dịch</div>
-                    <div class="value">${data.transaction_fee || 'N/A'}</div>
+                    <input type="text" id="transactionFeeInput" value="${transactionFeeValue}" placeholder="Phí giao dịch">
                 </div>
 
                 <div class="info-item full-width">
                     <div class="label">📝 Nội dung chuyển khoản</div>
-                    <div class="value">${data.transaction_content || 'N/A'}</div>
+                    <textarea id="transactionContentInput" placeholder="Nội dung chuyển khoản">${transactionContentValue}</textarea>
                 </div>
             `;
+
+            syncAmountUsdFromInput();
+            updateFraudButtonState();
+
+            const amountUsdInput = document.getElementById('amountUsdInput');
+            if (amountUsdInput) {
+                amountUsdInput.addEventListener('input', () => {
+                    syncAmountUsdFromInput();
+                    updateFraudButtonState();
+                });
+            }
         }
 
         function showLoading() {
@@ -822,8 +961,11 @@
 
         // Fraud Detection
         fraudBtn.addEventListener('click', async () => {
-            if (!currentAmountUSD) {
-                showError('Không có thông tin số tiền để phân tích');
+            syncAmountUsdFromInput();
+            updateFraudButtonState();
+
+            if (currentAmountUSD === null) {
+                showError('Không có thông tin số tiền (USD) hợp lệ để phân tích. Vui lòng nhập lại.');
                 return;
             }
 

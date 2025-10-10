@@ -63,12 +63,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvSenderName"
+                    <EditText
+                        android:id="@+id/etSenderName"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="Nhập tên người gửi"
+                        android:inputType="textCapWords"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -88,12 +92,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvReceiverName"
+                    <EditText
+                        android:id="@+id/etReceiverName"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="Nhập tên người nhận"
+                        android:inputType="textCapWords"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -141,12 +149,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvAmountVnd"
+                    <EditText
+                        android:id="@+id/etAmountVnd"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="0 VND"
+                        android:background="@android:color/transparent"
+                        android:hint="0"
+                        android:inputType="numberDecimal"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="16sp"
                         android:textColor="#27AE60"
                         android:textStyle="bold"/>
@@ -167,12 +179,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvAmountUsd"
+                    <EditText
+                        android:id="@+id/etAmountUsd"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="0 USD"
+                        android:background="@android:color/transparent"
+                        android:hint="0"
+                        android:inputType="numberDecimal"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="16sp"
                         android:textColor="#27AE60"
                         android:textStyle="bold"/>
@@ -221,12 +237,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvDate"
+                    <EditText
+                        android:id="@+id/etDate"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="dd/MM/yyyy"
+                        android:inputType="text"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -246,12 +266,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvTime"
+                    <EditText
+                        android:id="@+id/etTime"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="HH:mm:ss"
+                        android:inputType="text"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -299,15 +323,18 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp"/>
 
-                    <TextView
-                        android:id="@+id/tvTransactionContent"
+                    <EditText
+                        android:id="@+id/etTransactionContent"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="N/A"
-                        android:textSize="14sp"
-                        android:textColor="#333"
+                        android:background="#F0F0F0"
+                        android:gravity="top"
+                        android:hint="Nhập nội dung giao dịch"
+                        android:inputType="textMultiLine"
+                        android:minLines="2"
                         android:padding="8dp"
-                        android:background="#F0F0F0"/>
+                        android:textColor="#333"
+                        android:textSize="14sp"/>
                 </LinearLayout>
 
                 <!-- Sender Bank -->
@@ -326,12 +353,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvSenderBank"
+                    <EditText
+                        android:id="@+id/etSenderBank"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="Ngân hàng gửi"
+                        android:inputType="text"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -352,12 +383,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvReceiverBank"
+                    <EditText
+                        android:id="@+id/etReceiverBank"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="Ngân hàng nhận"
+                        android:inputType="text"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -378,12 +413,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvTransactionId"
+                    <EditText
+                        android:id="@+id/etTransactionId"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:background="@android:color/transparent"
+                        android:hint="Mã giao dịch"
+                        android:inputType="text"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -403,12 +442,16 @@
                         android:textColor="#666"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/tvTransactionFee"
+                    <EditText
+                        android:id="@+id/etTransactionFee"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.5"
-                        android:text="0 VND"
+                        android:background="@android:color/transparent"
+                        android:hint="0"
+                        android:inputType="numberDecimal"
+                        android:minLines="1"
+                        android:padding="4dp"
                         android:textSize="14sp"
                         android:textColor="#333"/>
                 </LinearLayout>
@@ -417,7 +460,7 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!-- OCR Metadata Card -->
+        <!-- Fraud Detection Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -434,61 +477,77 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="ℹ️ Thông Tin Xử Lý"
+                    android:text="🚨 Phân Tích Gian Lận"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#333"
-                    android:layout_marginBottom="16dp"/>
+                    android:layout_marginBottom="12dp"/>
 
-                <!-- OCR Confidence -->
-                <LinearLayout
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
+                    android:text="Nhấn nút bên dưới để phân tích rủi ro dựa trên số tiền (USD). Bạn có thể chỉnh sửa số tiền trước khi phân tích."
+                    android:textSize="13sp"
+                    android:textColor="#555"
+                    android:layout_marginBottom="12dp"/>
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Độ chính xác OCR:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
+                <Button
+                    android:id="@+id/btnFraudCheck"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="🔍 Phân tích Fraud"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#ff6b6b"
+                    android:textColor="#FFFFFF"/>
 
-                    <TextView
-                        android:id="@+id/tvOcrConfidence"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:text="N/A"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
+                <ProgressBar
+                    android:id="@+id/progressFraud"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone"/>
 
-                <!-- Processing Time -->
                 <LinearLayout
+                    android:id="@+id/layoutFraudResult"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="16dp"
+                    android:background="#FFF8F0"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:clipToPadding="false">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:id="@+id/tvFraudStatus"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Thời gian xử lý:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
+                        android:text="--"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#ff6b6b"
+                        android:layout_marginBottom="8dp"/>
 
                     <TextView
-                        android:id="@+id/tvProcessingTime"
-                        android:layout_width="0dp"
+                        android:id="@+id/tvFraudProbability"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:text="N/A"
+                        android:text="Tỷ lệ: --"
+                        android:textSize="15sp"
+                        android:textColor="#333"
+                        android:layout_marginBottom="6dp"/>
+
+                    <TextView
+                        android:id="@+id/tvFraudRecommendation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Khuyến nghị: --"
                         android:textSize="14sp"
-                        android:textColor="#333"/>
+                        android:textColor="#555"/>
                 </LinearLayout>
 
             </LinearLayout>

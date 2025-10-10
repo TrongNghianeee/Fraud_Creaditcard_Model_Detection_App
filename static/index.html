@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Text Extraction - Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.drag-over {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .language-select {
+            margin: 20px 0;
+        }
+
+        .language-select label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .language-select select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .language-select select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .preview-area {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .preview-area img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .result-area {
+            min-height: 400px;
+        }
+
+        .json-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .extracted-text {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .extracted-text h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-item .value {
+            color: #667eea;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #c33;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3c3;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success.active {
+            display: block;
+        }
+
+        .transaction-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-item .label {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .info-item .value {
+            color: #333;
+            font-size: 1.1em;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-item.highlight {
+            background: #fff4e6;
+            border-left-color: #ff9800;
+        }
+
+        .info-item.highlight .value {
+            color: #ff9800;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .fraud-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .fraud-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .fraud-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .fraud-btn:active {
+            transform: translateY(0);
+        }
+
+        .fraud-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .fraud-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .fraud-result.active {
+            display: block;
+        }
+
+        .fraud-result.safe {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 5px solid #28a745;
+        }
+
+        .fraud-result.low-risk {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border-left: 5px solid #17a2b8;
+        }
+
+        .fraud-result.medium-risk {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left: 5px solid #ffc107;
+        }
+
+        .fraud-result.high-risk {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 5px solid #dc3545;
+        }
+
+        .fraud-result.very-high-risk {
+            background: linear-gradient(135deg, #721c24 0%, #a71d2a 100%);
+            border-left: 5px solid #721c24;
+            color: white;
+        }
+
+        .fraud-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .fraud-icon {
+            font-size: 3em;
+        }
+
+        .fraud-title {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .fraud-probability {
+            font-size: 2em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .fraud-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .fraud-detail-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .fraud-result.very-high-risk .fraud-detail-item {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .fraud-detail-item .label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .fraud-detail-item .value {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .fraud-recommendation {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .fraud-result.very-high-risk .fraud-recommendation {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .matched-transaction {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .fraud-result.very-high-risk .matched-transaction {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .matched-transaction .title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .matched-transaction .info {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px 10px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .transaction-info {
+                grid-template-columns: 1fr;
+            }
+
+            .fraud-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 OCR Text Extraction</h1>
+            <p>Upload ảnh để trích xuất văn bản bằng Tesseract OCR</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>📤 Upload Ảnh</h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p style="font-size: 1.1em; margin-bottom: 10px;">
+                        <strong>Kéo thả ảnh vào đây</strong>
+                    </p>
+                    <p style="color: #666;">hoặc click để chọn file</p>
+                    <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                        Hỗ trợ: JPG, PNG, GIF, BMP, TIFF, WEBP
+                    </p>
+                </div>
+
+                <input type="file" id="fileInput" accept="image/*">
+
+                <div class="language-select">
+                    <label for="language">🌐 Ngôn ngữ OCR:</label>
+                    <select id="language">
+                        <option value="vie+eng">Tiếng Việt + English</option>
+                        <option value="vie">Tiếng Việt</option>
+                        <option value="eng">English</option>
+                        <option value="chi_sim">Chinese (Simplified)</option>
+                        <option value="jpn">Japanese</option>
+                        <option value="kor">Korean</option>
+                    </select>
+                </div>
+
+                <div class="preview-area" id="previewArea"></div>
+
+                <button class="btn" id="extractBtn" disabled>
+                    🚀 Phân tích giao dịch
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Đang trích xuất văn bản...</p>
+                    <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Bước 1/2: OCR đang xử lý</p>
+                </div>
+
+                <div class="loading" id="aiLoading">
+                    <div class="spinner"></div>
+                    <p>AI đang phân tích giao dịch...</p>
+                    <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Bước 2/2: Trích xuất thông tin</p>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div class="card result-area">
+                <h2>📊 Kết quả</h2>
+
+                <div class="error" id="error"></div>
+                <div class="success" id="success">Trích xuất thành công!</div>
+
+                <div id="resultContent" style="display: none;">
+                    <!-- Transaction Info Only -->
+                    <div id="transactionSection">
+                        <h3 style="margin-bottom: 15px; color: #667eea;">💳 Thông tin giao dịch:</h3>
+                        <div class="transaction-info" id="transactionInfo"></div>
+                        
+                        <!-- Fraud Detection Section -->
+                        <div class="fraud-section">
+                            <button class="fraud-btn" id="fraudBtn" disabled>
+                                🔍 Phân tích Fraud Detection
+                            </button>
+                            
+                            <div class="loading" id="fraudLoading">
+                                <div class="spinner"></div>
+                                <p>Đang phân tích giao dịch...</p>
+                                <p style="font-size: 0.9em; color: #666; margin-top: 5px;">AI đang kiểm tra fraud risk</p>
+                            </div>
+                            
+                            <div class="fraud-result" id="fraudResult"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="emptyState" style="text-align: center; padding: 50px; color: #999;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">📋</div>
+                    <p style="font-size: 1.2em;">Chưa có kết quả</p>
+                    <p style="margin-top: 10px;">Upload ảnh và nhấn "Trích xuất văn bản"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewArea = document.getElementById('previewArea');
+        const extractBtn = document.getElementById('extractBtn');
+        const loading = document.getElementById('loading');
+        const aiLoading = document.getElementById('aiLoading');
+        const error = document.getElementById('error');
+        const success = document.getElementById('success');
+        const resultContent = document.getElementById('resultContent');
+        const emptyState = document.getElementById('emptyState');
+        const transactionInfo = document.getElementById('transactionInfo');
+        const language = document.getElementById('language');
+        const fraudBtn = document.getElementById('fraudBtn');
+        const fraudLoading = document.getElementById('fraudLoading');
+        const fraudResult = document.getElementById('fraudResult');
+
+        let selectedFile = null;
+        let currentAmountUSD = null;
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                showError('File không hợp lệ! Vui lòng chọn file ảnh.');
+                return;
+            }
+
+            selectedFile = file;
+            extractBtn.disabled = false;
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewArea.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+
+            // Clear previous results
+            hideError();
+            hideSuccess();
+        }
+
+        // Extract text
+        extractBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            showLoading();
+            hideError();
+            hideSuccess();
+            resultContent.style.display = 'none';
+            emptyState.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('language', language.value);
+
+            try {
+                // Call combined OCR + AI parsing API
+                const response = await fetch('/api/preprocess/extract-and-parse', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.ai_parsing_success) {
+                    displayResult(data);
+                    showSuccess();
+                } else if (data.success && !data.ai_parsing_success) {
+                    showError('OCR thành công nhưng AI không thể phân tích: ' + (data.ai_error || 'Unknown error'));
+                } else {
+                    showError(data.error || 'Có lỗi xảy ra trong quá trình xử lý');
+                }
+            } catch (err) {
+                showError('Không thể kết nối đến server. Vui lòng kiểm tra server đang chạy.');
+                console.error(err);
+            } finally {
+                hideLoading();
+                hideAiLoading();
+            }
+        });
+
+        function displayResult(data) {
+            // Show result section
+            resultContent.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Display transaction info
+            if (data.transaction) {
+                displayTransaction(data.transaction);
+                
+                // Enable fraud detection button if amount_usd is available
+                if (data.transaction.amount_usd) {
+                    currentAmountUSD = data.transaction.amount_usd;
+                    fraudBtn.disabled = false;
+                } else {
+                    fraudBtn.disabled = true;
+                }
+            } else {
+                transactionInfo.innerHTML = '<p style="color: #999;">Không thể trích xuất thông tin giao dịch</p>';
+                fraudBtn.disabled = true;
+            }
+            
+            // Hide fraud result from previous analysis
+            fraudResult.classList.remove('active');
+        }
+
+        function displayTransaction(data) {
+            const formatCurrency = (amount) => {
+                if (amount === null || amount === undefined) return 'N/A';
+                return new Intl.NumberFormat('vi-VN').format(amount);
+            };
+
+            transactionInfo.innerHTML = `
+                <div class="info-item highlight full-width">
+                    <div class="label">💰 Số tiền</div>
+                    <div class="value">${formatCurrency(data.amount_vnd)} VND ≈ $${data.amount_usd || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">👤 Người gửi</div>
+                    <div class="value">${data.sender_name || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">👤 Người nhận</div>
+                    <div class="value">${data.receiver_name || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">🏦 Ngân hàng gửi</div>
+                    <div class="value">${data.sender_bank || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">🏦 Ngân hàng nhận</div>
+                    <div class="value">${data.receiver_bank || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">📅 Ngày giao dịch</div>
+                    <div class="value">${data.date || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">⏰ Thời gian</div>
+                    <div class="value">${data.time || 'N/A'}${data.time_in_seconds ? ` (${data.time_in_seconds}s)` : ''}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">🔖 Mã giao dịch (MGD)</div>
+                    <div class="value">${data.transaction_id || 'N/A'}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">💳 Phí giao dịch</div>
+                    <div class="value">${data.transaction_fee || 'N/A'}</div>
+                </div>
+
+                <div class="info-item full-width">
+                    <div class="label">📝 Nội dung chuyển khoản</div>
+                    <div class="value">${data.transaction_content || 'N/A'}</div>
+                </div>
+            `;
+        }
+
+        function showLoading() {
+            loading.classList.add('active');
+            aiLoading.classList.add('active');
+            extractBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+
+        function hideAiLoading() {
+            aiLoading.classList.remove('active');
+            extractBtn.disabled = false;
+        }
+
+        function showError(message) {
+            error.textContent = '❌ ' + message;
+            error.classList.add('active');
+        }
+
+        function hideError() {
+            error.classList.remove('active');
+        }
+
+        function showSuccess() {
+            success.classList.add('active');
+            setTimeout(() => hideSuccess(), 3000);
+        }
+
+        function hideSuccess() {
+            success.classList.remove('active');
+        }
+
+        function showAiLoading() {
+            aiLoading.classList.add('active');
+            extractBtn.disabled = true;
+        }
+
+        function hideAiLoading() {
+            aiLoading.classList.remove('active');
+            extractBtn.disabled = false;
+        }
+
+        // Fraud Detection
+        fraudBtn.addEventListener('click', async () => {
+            if (!currentAmountUSD) {
+                showError('Không có thông tin số tiền để phân tích');
+                return;
+            }
+
+            // Show loading
+            fraudLoading.classList.add('active');
+            fraudBtn.disabled = true;
+            fraudResult.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/model/predict-from-amount', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount_usd: currentAmountUSD
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayFraudResult(data);
+                } else {
+                    showError(data.error || 'Không thể phân tích fraud detection');
+                }
+            } catch (err) {
+                showError('Lỗi kết nối đến fraud detection API: ' + err.message);
+                console.error(err);
+            } finally {
+                fraudLoading.classList.remove('active');
+                fraudBtn.disabled = false;
+            }
+        });
+
+        function displayFraudResult(data) {
+            const prediction = data.prediction;
+            const riskLevel = prediction.risk_level;
+            const fraudProb = (prediction.fraud_probability * 100).toFixed(2);
+
+            // Determine risk class and icon
+            let riskClass = '';
+            let riskIcon = '';
+            let riskText = '';
+            let recommendation = '';
+
+            switch(riskLevel) {
+                case 'very_low':
+                    riskClass = 'safe';
+                    riskIcon = '✅';
+                    riskText = 'AN TOÀN';
+                    recommendation = '✅ Giao dịch an toàn, có thể tiếp tục.';
+                    break;
+                case 'low':
+                    riskClass = 'low-risk';
+                    riskIcon = '✓';
+                    riskText = 'RỦI RO THẤP';
+                    recommendation = '✓ Giao dịch có rủi ro thấp.';
+                    break;
+                case 'medium':
+                    riskClass = 'medium-risk';
+                    riskIcon = '⚠️';
+                    riskText = 'RỦI RO TRUNG BÌNH';
+                    recommendation = '⚠️ Cần xem xét kỹ trước khi tiếp tục.';
+                    break;
+                case 'high':
+                    riskClass = 'high-risk';
+                    riskIcon = '❌';
+                    riskText = 'RỦI RO CAO';
+                    recommendation = '❌ Nên từ chối hoặc điều tra kỹ.';
+                    break;
+                case 'very_high':
+                    riskClass = 'very-high-risk';
+                    riskIcon = '🚨';
+                    riskText = 'RỦI RO RẤT CAO';
+                    recommendation = '🚨 Khuyến nghị từ chối ngay!';
+                    break;
+            }
+
+            fraudResult.className = `fraud-result ${riskClass} active`;
+            fraudResult.innerHTML = `
+                <div class="fraud-header">
+                    <div class="fraud-icon">${riskIcon}</div>
+                    <div>
+                        <div class="fraud-title">${riskText}</div>
+                        <div style="opacity: 0.8; font-size: 0.9em; margin-top: 5px;">
+                            ${prediction.is_fraud ? 'Phát hiện gian lận' : 'Không phát hiện gian lận'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fraud-probability">
+                    Tỷ lệ Fraud: ${fraudProb}%
+                </div>
+
+                <div class="fraud-recommendation">
+                    <strong>Khuyến nghị:</strong><br>
+                    ${recommendation}
+                </div>
+            `;
+
+            // Scroll to fraud result
+            fraudResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>

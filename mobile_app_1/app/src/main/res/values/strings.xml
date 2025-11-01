@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">mobile_app_1</string>
+    <string name="app_name">Fraud Detection App</string>
+    
+    <!-- Gender options -->
+    <string-array name="gender_options">
+        <item>Nam</item>
+        <item>Nữ</item>
+    </string-array>
+    
+    <!-- Category options -->
+    <string-array name="category_options">
+        <item>Chọn loại giao dịch</item>
+        <item>giải trí</item>
+        <item>ăn uống</item>
+        <item>xăng dầu</item>
+        <item>siêu thị online</item>
+        <item>siêu thị</item>
+        <item>sức khỏe</item>
+        <item>nội thất</item>
+        <item>trẻ em</item>
+        <item>khác online</item>
+        <item>khác</item>
+        <item>chăm sóc cá nhân</item>
+        <item>mua sắm online</item>
+        <item>mua sắm</item>
+        <item>du lịch</item>
+    </string-array>
 </resources>

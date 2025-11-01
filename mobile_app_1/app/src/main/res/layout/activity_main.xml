@@ -18,20 +18,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fraud Detection OCR"
+            android:text="Fraud Detection App"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="@color/design_default_color_primary"
+            android:textColor="@color/primary_text"
             android:layout_marginTop="32dp"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Subtitle -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Upload transaction image for analysis"
-            android:textSize="14sp"
-            android:textColor="#666"
             android:layout_marginBottom="32dp"/>
 
         <!-- Image Preview Card -->
@@ -73,7 +64,7 @@
             android:id="@+id/btnUpload"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="📷 Select Image"
+            android:text="📷 Chọn Ảnh"
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="12dp"
@@ -87,7 +78,7 @@
             android:id="@+id/btnAnalyze"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="🔍 Analyze Transaction"
+            android:text="🔍 Phân Tích Giao Dịch"
             android:textSize="16sp"
             android:textStyle="bold"
             android:enabled="false"
@@ -95,6 +86,22 @@
             app:icon="@android:drawable/ic_menu_send"
             app:iconGravity="textStart"
             app:iconPadding="8dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- View Results Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewResults"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="📋 Xem Kết Quả Trích Xuất"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_info_details"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_marginBottom="24dp"/>
 
         <!-- Progress Bar -->
@@ -112,43 +119,8 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textSize="14sp"
-            android:textColor="#666"
+            android:textColor="@color/secondary_text"
             android:layout_marginBottom="24dp"/>
-
-        <!-- Instructions Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardElevation="2dp"
-            app:cardCornerRadius="8dp"
-            app:cardBackgroundColor="#F5F5F5">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ℹ️ Instructions:"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="#333"
-                    android:layout_marginBottom="8dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1. Tap 'Select Image' to choose a transaction screenshot\n2. Preview the image\n3. Tap 'Analyze Transaction' to extract details\n4. View parsed transaction information"
-                    android:textSize="13sp"
-                    android:textColor="#666"
-                    android:lineSpacingExtra="2dp"/>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Text colors for DARK mode -->
+    <color name="primary_text">#E0E0E0</color>
+    <color name="secondary_text">#B0B0B0</color>
+    
+    <!-- Background colors for DARK mode -->
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="card_background">#2C2C2C</color>
+    
+    <!-- Status colors for dark mode (slightly adjusted) -->
+    <color name="success_bg">#1B5E20</color>
+    <color name="success_text">#81C784</color>
+    <color name="error_bg">#B71C1C</color>
+    <color name="error_text">#EF5350</color>
+    <color name="warning_bg">#E65100</color>
+</resources>

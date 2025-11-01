@@ -3,26 +3,43 @@ package com.example.mobile_app;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Request payload for fraud detection endpoint.
+ * Request payload for fraud detection endpoint (NEW API)
+ * 4 parameters: amt, gender, category, transaction_time
  */
 public class FraudRequest {
 
-    @SerializedName("amount_usd")
-    private final double amountUsd;
+    @SerializedName("amt")
+    private final double amt;  // Số tiền VND
 
-    @SerializedName("amount_vnd")
-    private final Double amountVnd;
+    @SerializedName("gender")
+    private final String gender;  // Giới tính (Nam/Nữ)
 
-    public FraudRequest(double amountUsd, Double amountVnd) {
-        this.amountUsd = amountUsd;
-        this.amountVnd = amountVnd;
+    @SerializedName("category")
+    private final String category;  // Loại giao dịch (Tiếng Việt)
+
+    @SerializedName("transaction_time")
+    private final String transactionTime;  // Thời gian (HH:MM:SS)
+
+    public FraudRequest(double amt, String gender, String category, String transactionTime) {
+        this.amt = amt;
+        this.gender = gender;
+        this.category = category;
+        this.transactionTime = transactionTime;
     }
 
-    public double getAmountUsd() {
-        return amountUsd;
+    public double getAmt() {
+        return amt;
     }
 
-    public Double getAmountVnd() {
-        return amountVnd;
+    public String getGender() {
+        return gender;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getTransactionTime() {
+        return transactionTime;
     }
 }

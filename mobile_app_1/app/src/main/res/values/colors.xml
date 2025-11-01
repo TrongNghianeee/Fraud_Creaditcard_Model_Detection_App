@@ -2,4 +2,28 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Primary colors -->
+    <color name="primary">#667EEA</color>
+    <color name="primary_dark">#5568D3</color>
+    <color name="accent">#764BA2</color>
+    
+    <!-- Text colors for LIGHT mode -->
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    
+    <!-- Background colors for LIGHT mode -->
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#F5F5F5</color>
+    <color name="card_background">#FFFFFF</color>
+    
+    <!-- Status colors -->
+    <color name="success">#4CAF50</color>
+    <color name="success_bg">#E8F5E9</color>
+    <color name="success_text">#2E7D32</color>
+    <color name="error">#F44336</color>
+    <color name="error_bg">#FFEBEE</color>
+    <color name="error_text">#C62828</color>
+    <color name="warning">#FF9800</color>
+    <color name="warning_bg">#FFF3E0</color>
 </resources>

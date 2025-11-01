@@ -1,121 +1,152 @@
 """
-Model routes - Handle ML model related operations
+Model routes - Fraud detection predictions using direct model
 """
 from flask import request, jsonify, current_app
 from app.blueprints.model import model_bp
-from app.blueprints.model.services import ModelService
+from app.blueprints.model.fraud_detector import fraud_detector
+import re
 
 
-@model_bp.route('/reload', methods=['POST'])
-def reload_model():
-    """Reload the ML model (useful after model updates)"""
-    try:
-        ModelService.reload_model()
-        return jsonify({
-            'message': 'Model reloaded successfully'
-        }), 200
-    except Exception as e:
-        current_app.logger.error(f"Model reload error: {str(e)}")
-        return jsonify({'error': 'Failed to reload model'}), 500
-
-
-@model_bp.route('/predict-from-amount', methods=['POST'])
-def predict_from_amount():
+@model_bp.route('/predict-fraud', methods=['POST'])
+def predict_fraud():
     """
-    Predict fraud based on transaction amount from OCR
-    
-    This endpoint finds a matching transaction in the test dataset based on amount
-    and uses it to predict fraud probability.
+    API mới: Predict fraud dựa trên 4 tham số (logic giống predict.py)
     
     Request body:
     {
-        "amount_usd": 20.50,
-        "amount_vnd": 500000  (optional)
+        "amt": 500000,                    // Số tiền (VND)
+        "gender": "Nam",                  // Giới tính (Nam/Nữ)
+        "category": "xăng dầu",          // Loại giao dịch (Tiếng Việt)
+        "transaction_time": "13:05:02"   // Thời gian giao dịch (HH:MM:SS)
     }
     
     Response:
     {
         "success": true,
-        "amount_usd": 20.50,
-        "matched_transaction": {...},
         "prediction": {
             "is_fraud": false,
-            "fraud_probability": 0.05,
-            "confidence": "high",
-            "risk_level": "low"
+            "fraud_probability": 0.15,
+            "safe_probability": 0.85,
+            "risk_level": "low",
+            "confidence": "high"
         },
-        "features_used": [...],
-        "model_version": "v2_flexible"
+        "input": {
+            "amt_vnd": 500000,
+            "amt_usd": 20.0,
+            "gender": "Nam (M)",
+            "category": "xăng dầu (gas_transport)",
+            "transaction_time": "13:05:02 (hour: 13)"
+        }
     }
     """
-    result = None
     try:
-        current_app.logger.info("=== START predict-from-amount ===")
         data = request.get_json()
-        current_app.logger.info(f"Request data: {data}")
         
-        if not data or 'amount_usd' not in data:
+        if not data:
             return jsonify({
                 'success': False,
-                'error': 'Missing amount_usd in request body'
+                'error': 'No JSON data provided'
             }), 400
         
-        amount_usd = float(data['amount_usd'])
+        # Validate required fields
+        required_fields = ['amt', 'gender', 'category', 'transaction_time']
+        missing_fields = [field for field in required_fields if field not in data]
         
-        if amount_usd < 0:
+        if missing_fields:
             return jsonify({
                 'success': False,
-                'error': 'amount_usd must be non-negative'
+                'error': f'Missing required fields: {", ".join(missing_fields)}'
             }), 400
         
-        current_app.logger.info(f"Calling ModelService.predict_from_amount({amount_usd})")
+        amt = data['amt']
+        gender = data['gender']
+        category = data['category']
+        transaction_time = data['transaction_time']
         
-        # Use ModelService to predict from amount
-        result = ModelService.predict_from_amount(amount_usd)
+        # Validate amt (Số tiền VND)
+        try:
+            amt = float(amt)
+            if amt <= 0:
+                raise ValueError("Amount must be positive")
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': f'Invalid amount: {amt}. Must be a positive number'
+            }), 400
         
-        current_app.logger.info("=" * 80)
-        current_app.logger.info("[ROUTE] BACK FROM ModelService.predict_from_amount()")
-        current_app.logger.info(f"[ROUTE] Result received: type={type(result)}, keys={list(result.keys()) if isinstance(result, dict) else 'NOT A DICT'}")
-        current_app.logger.info("=" * 80)
+        # Validate gender (Giới tính: Nam/Nữ)
+        if gender not in ['Nam', 'Nữ']:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid gender: {gender}. Must be "Nam" or "Nữ"'
+            }), 400
         
-        current_app.logger.info("ModelService.predict_from_amount completed successfully")
-        current_app.logger.info(f"Result type: {type(result)}")
+        # Validate transaction_time (Thời gian: HH:MM:SS)
+        time_pattern = r'^([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$'
+        time_match = re.match(time_pattern, transaction_time)
         
-        current_app.logger.info("[ROUTE] ABOUT TO CALL jsonify()")
-        response = jsonify(result)
-        current_app.logger.info("[ROUTE] jsonify() COMPLETED")
+        if not time_match:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid time format: {transaction_time}. Expected HH:MM:SS (e.g., 13:05:02)'
+            }), 400
         
-        current_app.logger.info("=" * 80)
-        current_app.logger.info("[ROUTE] ABOUT TO RETURN RESPONSE WITH STATUS 200")
-        current_app.logger.info("=" * 80)
+        current_app.logger.info(f"[PREDICT-FRAUD] Input: amt={amt} VND, gender={gender}, category={category}, time={transaction_time}")
         
-        return response, 200
+        # Predict using fraud_detector (logic giống predict.py)
+        result = fraud_detector.predict(
+            amt=amt,
+            gender=gender,
+            category=category,
+            transaction_time=transaction_time
+        )
         
-    except ValueError as e:
-        current_app.logger.error(f"ValueError in predict-from-amount: {str(e)}")
-        import traceback
-        current_app.logger.error(traceback.format_exc())
+        # Determine risk level and confidence
+        fraud_proba = result['fraud_probability']
+        
+        if fraud_proba < 0.1:
+            risk_level = "very_low"
+            confidence = "very_high"
+        elif fraud_proba < 0.3:
+            risk_level = "low"
+            confidence = "high"
+        elif fraud_proba < 0.5:
+            risk_level = "medium"
+            confidence = "medium"
+        elif fraud_proba < 0.7:
+            risk_level = "high"
+            confidence = "medium"
+        else:
+            risk_level = "very_high"
+            confidence = "high"
+        
+        converted = result['input_converted']
+        
+        current_app.logger.info(f"[PREDICT-FRAUD] Result: is_fraud={result['is_fraud']}, probability={fraud_proba:.2f}")
+        
         return jsonify({
-            'success': False,
-            'error': f'Invalid input: {str(e)}'
-        }), 400
-    except FileNotFoundError as e:
-        current_app.logger.error(f"FileNotFoundError in predict-from-amount: {str(e)}")
-        import traceback
-        current_app.logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Required file not found: {str(e)}'
-        }), 500
+            'success': True,
+            'prediction': {
+                'is_fraud': result['is_fraud'],
+                'fraud_probability': result['fraud_probability'],
+                'safe_probability': result['safe_probability'],
+                'risk_level': risk_level,
+                'confidence': confidence
+            },
+            'input': {
+                'amt_vnd': converted['amt_vnd'],
+                'amt_usd': round(converted['amt_usd'], 2),
+                'gender': f"{converted['gender_vn']} ({converted['gender_en']})",
+                'category': f"{converted['category_vn']} ({converted['category_en']})",
+                'transaction_time': f"{converted['transaction_time']} (hour: {converted['transaction_hour']})"
+            }
+        }), 200
+        
     except Exception as e:
+        current_app.logger.error(f"[PREDICT-FRAUD] Error: {str(e)}")
         import traceback
-        error_trace = traceback.format_exc()
-        current_app.logger.error(f"Exception in predict-from-amount: {str(e)}\n{error_trace}")
+        current_app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
-            'error': f'An error occurred during prediction: {str(e)}'
+            'error': f'Prediction failed: {str(e)}'
         }), 500
-    finally:
-        current_app.logger.info("=== FINALLY block in predict-from-amount ===")
-        if result:
-            current_app.logger.info(f"Result keys: {result.keys() if isinstance(result, dict) else 'NOT A DICT'}")

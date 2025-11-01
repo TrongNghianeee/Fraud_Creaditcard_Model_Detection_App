@@ -19,6 +19,11 @@
         android:usesCleartextTraffic="true">
         
         <activity
+            android:name=".FraudResultActivity"
+            android:exported="false"
+            android:parentActivityName=".FormActivity" />
+        
+        <activity
             android:name=".FormActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />

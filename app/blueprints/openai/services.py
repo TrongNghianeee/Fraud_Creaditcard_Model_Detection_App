@@ -65,42 +65,79 @@ class OpenAIService:
             ocr_text (str): Raw OCR text from transaction image
             
         Returns:
-            dict: Parsed transaction information
+            dict: Parsed transaction information (4 fields cho fraud prediction)
         """
-        usd_rate = current_app.config.get('USD_TO_VND_RATE', 24000)
         
         system_prompt = """Bạn là một AI chuyên phân tích giao dịch ngân hàng từ văn bản OCR.
 Nhiệm vụ của bạn là trích xuất thông tin giao dịch từ văn bản và trả về JSON với format chính xác.
 
-Lưu ý:
-- Nếu không tìm thấy thông tin, để giá trị là null
-- Số tiền phải là số, không có dấu phẩy hoặc dấu chấm (ví dụ: 500000 thay vì 500,000)
-- Thời gian phải theo format đúng
-- Tên người phải viết hoa đúng cách
-- MGD (Mã giao dịch) thường là số hoặc mã định danh
-"""
+QUY TẮC QUAN TRỌNG:
+- CHỈ TRẢ VỀ JSON, KHÔNG THÊM BẤT KỲ TEXT NÀO KHÁC
+- KHÔNG THÊM MARKDOWN (```json hoặc ```)
+- KHÔNG THÊM GIẢI THÍCH, CHÚ THÍCH HAY COMMENT
+- CHỈ TRẢ VỀ 1 OBJECT JSON DUY NHẤT
 
-        user_prompt = f"""Phân tích văn bản giao dịch sau và trích xuất thông tin:
+QUAN TRỌNG - Chỉ trích xuất 4 thông tin sau:
+1. amt (số tiền VND) - Bắt buộc phải là số nguyên, không dấu phẩy/chấm
+2. gender (giới tính) - Chỉ "Nam" hoặc "Nữ", phải viết hoa chữ cái đầu
+3. category (loại giao dịch) - Dựa vào nội dung để xếp loại
+4. transaction_time (thời gian giao dịch) - Format HH:MM:SS (ví dụ: 13:05:02)
+
+DANH SÁCH CATEGORY hợp lệ (chọn 1 trong các loại sau):
+- 'giải trí': Xem phim, karaoke, game, giải trí
+- 'ăn uống': Nhà hàng, quán ăn, cafe, đồ ăn thức uống
+- 'xăng dầu': Xăng, dầu, nhiên liệu, cửa hàng xăng
+- 'siêu thị online': Mua sắm online tại siêu thị, grocery online
+- 'siêu thị': Siêu thị, cửa hàng tiện lợi, grocery
+- 'sức khỏe': Y tế, thuốc, bệnh viện, phòng khám, gym, fitness
+- 'nội thất': Đồ nội thất, trang trí nhà cửa
+- 'trẻ em': Đồ chơi trẻ em, sữa, tã, đồ dùng trẻ em, pet
+- 'khác online': Mua sắm online không rõ ràng
+- 'khác': Giao dịch không xác định hoặc không thuộc loại nào
+- 'chăm sóc cá nhân': Spa, làm đẹp, mỹ phẩm, salon
+- 'mua sắm online': Mua sắm online quần áo, phụ kiện
+- 'mua sắm': Mua sắm trực tiếp quần áo, giày dép, phụ kiện
+- 'du lịch': Khách sạn, vé máy bay, tour du lịch
+
+LƯU Ý:
+- Nếu không tìm thấy thông tin gender, mặc định là null
+- Nếu không xác định được category, mặc định là 'khác'
+- Số tiền (amt) phải là số nguyên VND, không có dấu
+- Thời gian (transaction_time) phải theo format HH:MM:SS (giờ:phút:giây)
+- TUYỆT ĐỐI CHỈ TRẢ VỀ JSON, KHÔNG TEXT THỪA"""
+
+        user_prompt = f"""Phân tích văn bản giao dịch sau và trích xuất 4 thông tin:
 
 {ocr_text}
 
-Trả về JSON với cấu trúc sau (KHÔNG thêm markdown, chỉ trả JSON thuần):
+QUAN TRỌNG: Trả về JSON với CẤU TRÚC CHÍNH XÁC SAU (KHÔNG thay đổi tên key):
 {{
-  "sender_name": "Họ tên người gửi (viết hoa đúng)",
-  "receiver_name": "Họ tên người nhận (viết hoa đúng)",
-  "amount_vnd": số tiền VND (số nguyên, không dấu),
-  "amount_usd": số tiền USD (làm tròn 2 chữ số thập phân),
-  "time": "HH:MM:SS",
-  "time_in_seconds": tổng số giây từ 00:00:00,
-  "date": "DD/MM/YYYY",
-  "transaction_content": "Nội dung chuyển khoản",
-  "sender_bank": "Ngân hàng gửi",
-  "receiver_bank": "Ngân hàng nhận",
-  "transaction_id": "MGD (Mã giao dịch)",
-  "transaction_fee": "Phí giao dịch (VD: 'Miễn phí' hoặc số tiền)"
+  "amt": <số tiền VND - số nguyên, VD: 500000>,
+  "gender": "<Nam hoặc Nữ hoặc null>",
+  "category": "<loại giao dịch>",
+  "transaction_time": "<HH:MM:SS - VD: 13:05:02>"
 }}
 
-Tỷ giá: 1 USD = {usd_rate} VND"""
+VÍ DỤ OUTPUT ĐÚNG:
+{{
+  "amt": 500000,
+  "gender": "Nam",
+  "category": "xăng dầu",
+  "transaction_time": "13:05:02"
+}}
+
+TUYỆT ĐỐI KHÔNG DÙNG:
+- "transaction_hour" (SAI - không được phép)
+- "time" (SAI)
+- "hour" (SAI)
+
+CHỈ DÙNG KEY: "transaction_time" với format "HH:MM:SS"
+
+CHÚ Ý:
+- amt PHẢI là số nguyên VND (ví dụ: 500000, không phải "500,000" hay "500.000")
+- gender CHỈ có thể là "Nam", "Nữ" hoặc null
+- category PHẢI chọn từ danh sách category hợp lệ ở trên
+- transaction_time PHẢI có key chính xác là "transaction_time" và format "HH:MM:SS" (ví dụ: "13:05:02", "09:30:15")"""
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -110,30 +147,80 @@ Tỷ giá: 1 USD = {usd_rate} VND"""
         try:
             current_app.logger.info(f"Starting AI parsing for OCR text (length: {len(ocr_text)} chars)")
             
-            response = cls._get_completion(messages, temperature=0.1, max_tokens=1000)
+            response = cls._get_completion(messages, temperature=0.1, max_tokens=500)
             
             current_app.logger.info(f"AI Response received (length: {len(response)} chars)")
-            current_app.logger.info(f"AI Response preview: {response[:300]}...")  # Log first 300 chars
+            current_app.logger.info(f"AI Response preview: {response[:300]}...")
             
-            # Remove markdown code blocks if present
+            # Clean response - remove markdown code blocks and extra text
             response = response.strip()
+            
+            # Remove markdown code blocks
             if response.startswith('```'):
-                response = re.sub(r'^```json?\n', '', response)
-                response = re.sub(r'\n```$', '', response)
+                response = re.sub(r'^```(?:json)?\s*\n', '', response)
+                response = re.sub(r'\n```\s*$', '', response)
+            
+            # Extract JSON from text if there's extra content
+            # Try to find JSON object pattern
+            import re
+            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+            if json_match:
+                response = json_match.group(0)
+                current_app.logger.info(f"Extracted JSON from response: {response[:200]}...")
             
             # Parse JSON
             parsed_data = json.loads(response)
             
-            # Validate and ensure all fields exist
-            required_fields = [
-                'sender_name', 'receiver_name', 'amount_vnd', 'amount_usd',
-                'time', 'time_in_seconds', 'date', 'transaction_content',
-                'sender_bank', 'receiver_bank', 'transaction_id', 'transaction_fee'
-            ]
+            # FIX: Nếu AI trả về "transaction_hour" thay vì "transaction_time", convert ngay
+            if 'transaction_hour' in parsed_data and 'transaction_time' not in parsed_data:
+                hour = parsed_data.pop('transaction_hour')
+                # Convert hour number to HH:MM:SS format (assume 00:00 for minutes/seconds)
+                if isinstance(hour, (int, float)):
+                    parsed_data['transaction_time'] = f"{int(hour):02d}:00:00"
+                    current_app.logger.warning(f"AI returned 'transaction_hour'={hour}, converted to transaction_time={parsed_data['transaction_time']}")
+                else:
+                    parsed_data['transaction_time'] = None
+                    current_app.logger.warning(f"AI returned invalid 'transaction_hour'={hour}, setting transaction_time to null")
+            
+            # Validate required fields
+            required_fields = ['amt', 'gender', 'category', 'transaction_time']
             
             for field in required_fields:
                 if field not in parsed_data:
                     parsed_data[field] = None
+            
+            # Additional validation
+            valid_categories = [
+                'giải trí', 'ăn uống', 'xăng dầu', 'siêu thị online', 'siêu thị',
+                'sức khỏe', 'nội thất', 'trẻ em', 'khác online', 'khác',
+                'chăm sóc cá nhân', 'mua sắm online', 'mua sắm', 'du lịch'
+            ]
+            
+            # Ensure category is valid, default to 'khác' if not
+            if parsed_data.get('category') not in valid_categories:
+                current_app.logger.warning(f"Invalid category '{parsed_data.get('category')}', defaulting to 'khác'")
+                parsed_data['category'] = 'khác'
+            
+            # Ensure gender is valid
+            if parsed_data.get('gender') and parsed_data['gender'] not in ['Nam', 'Nữ']:
+                current_app.logger.warning(f"Invalid gender '{parsed_data.get('gender')}', setting to null")
+                parsed_data['gender'] = None
+            
+            # Validate transaction_time format (HH:MM:SS)
+            if parsed_data.get('transaction_time'):
+                import re
+                time_pattern = r'^([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$'
+                if not re.match(time_pattern, str(parsed_data['transaction_time'])):
+                    current_app.logger.warning(f"Invalid time format '{parsed_data.get('transaction_time')}', setting to null")
+                    parsed_data['transaction_time'] = None
+            
+            # Ensure amt is a number
+            if parsed_data.get('amt') is not None:
+                try:
+                    parsed_data['amt'] = int(parsed_data['amt'])
+                except (ValueError, TypeError):
+                    current_app.logger.warning(f"Invalid amount '{parsed_data.get('amt')}', setting to null")
+                    parsed_data['amt'] = None
             
             current_app.logger.info("AI parsing successful!")
             return {
@@ -143,7 +230,6 @@ Tỷ giá: 1 USD = {usd_rate} VND"""
             }
             
         except ValueError as e:
-            # This catches errors from _get_completion (API errors)
             error_msg = str(e)
             current_app.logger.error(f"AI API Error: {error_msg}")
             return {

@@ -1,8 +1,6 @@
 """
-OpenAI Blueprint - API endpoints for OpenAI integration
+OpenAI Blueprint - Services for AI integration (no routes)
 """
 from flask import Blueprint
 
 openai_bp = Blueprint('openai', __name__)
-
-from app.blueprints.openai import routes

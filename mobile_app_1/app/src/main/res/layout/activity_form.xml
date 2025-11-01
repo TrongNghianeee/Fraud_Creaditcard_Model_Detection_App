@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="@color/background"
     tools:context=".FormActivity">
 
     <LinearLayout
@@ -13,23 +13,22 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="✅ Kết Quả Phân Tích"
+            android:text="Kết Quả Trích Xuất"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="#667EEA"
+            android:textColor="@color/primary"
             android:gravity="center"
             android:layout_marginBottom="24dp"/>
 
-        <!-- Sender & Receiver Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/card_background"
             android:layout_marginBottom="16dp">
 
             <LinearLayout
@@ -41,531 +40,145 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="👤 Thông Tin Người Gửi/Nhận"
+                    android:text="Thông Tin Giao Dịch"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#333"
+                    android:textColor="@color/primary_text"
                     android:layout_marginBottom="16dp"/>
 
-                <!-- Sender Name -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Người gửi:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etSenderName"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="Nhập tên người gửi"
-                        android:inputType="textCapWords"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-                <!-- Receiver Name -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Người nhận:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etReceiverName"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="Nhập tên người nhận"
-                        android:inputType="textCapWords"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Amount Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="💰 Số Tiền"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Amount VND -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="VND:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etAmountVnd"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="0"
-                        android:inputType="numberDecimal"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="16sp"
-                        android:textColor="#27AE60"
-                        android:textStyle="bold"/>
-                </LinearLayout>
-
-                <!-- Amount USD -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="USD:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etAmountUsd"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="0"
-                        android:inputType="numberDecimal"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="16sp"
-                        android:textColor="#27AE60"
-                        android:textStyle="bold"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- DateTime Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="📅 Ngày &amp; Giờ"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Date -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Ngày:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etDate"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="dd/MM/yyyy"
-                        android:inputType="text"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-                <!-- Time -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Giờ:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etTime"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="HH:mm:ss"
-                        android:inputType="text"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Transaction Details Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="📝 Chi Tiết Giao Dịch"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Transaction Content -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="16dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nội dung:"
+                        android:text="Số tiền (VND)"
                         android:textSize="14sp"
-                        android:textColor="#666"
+                        android:textColor="@color/secondary_text"
                         android:textStyle="bold"
                         android:layout_marginBottom="4dp"/>
 
                     <EditText
-                        android:id="@+id/etTransactionContent"
+                        android:id="@+id/etAmount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="#F0F0F0"
-                        android:gravity="top"
-                        android:hint="Nhập nội dung giao dịch"
-                        android:inputType="textMultiLine"
-                        android:minLines="2"
-                        android:padding="8dp"
-                        android:textColor="#333"
-                        android:textSize="14sp"/>
+                        android:background="@color/surface"
+                        android:padding="12dp"
+                        android:hint="Nhập số tiền (VND)"
+                        android:inputType="number"
+                        android:textSize="16sp"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/secondary_text"/>
                 </LinearLayout>
 
-                <!-- Sender Bank -->
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Ngân hàng gửi:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etSenderBank"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="Ngân hàng gửi"
-                        android:inputType="text"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-                <!-- Receiver Bank -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Ngân hàng nhận:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etReceiverBank"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="Ngân hàng nhận"
-                        android:inputType="text"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-                <!-- Transaction ID -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Mã giao dịch:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etTransactionId"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="Mã giao dịch"
-                        android:inputType="text"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-                <!-- Transaction Fee -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Phí giao dịch:"
-                        android:textSize="14sp"
-                        android:textColor="#666"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/etTransactionFee"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.5"
-                        android:background="@android:color/transparent"
-                        android:hint="0"
-                        android:inputType="numberDecimal"
-                        android:minLines="1"
-                        android:padding="4dp"
-                        android:textSize="14sp"
-                        android:textColor="#333"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Fraud Detection Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🚨 Phân Tích Gian Lận"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#333"
-                    android:layout_marginBottom="12dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Nhấn nút bên dưới để phân tích rủi ro dựa trên số tiền (USD). Bạn có thể chỉnh sửa số tiền trước khi phân tích."
-                    android:textSize="13sp"
-                    android:textColor="#555"
-                    android:layout_marginBottom="12dp"/>
-
-                <Button
-                    android:id="@+id/btnFraudCheck"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="🔍 Phân tích Fraud"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:backgroundTint="#ff6b6b"
-                    android:textColor="#FFFFFF"/>
-
-                <ProgressBar
-                    android:id="@+id/progressFraud"
-                    style="?android:attr/progressBarStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="12dp"
-                    android:visibility="gone"/>
-
-                <LinearLayout
-                    android:id="@+id/layoutFraudResult"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:visibility="gone"
-                    android:layout_marginTop="16dp"
-                    android:background="#FFF8F0"
-                    android:padding="16dp"
-                    android:gravity="center_vertical"
-                    android:clipToPadding="false">
+                    android:layout_marginBottom="16dp">
 
                     <TextView
-                        android:id="@+id/tvFraudStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="--"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#ff6b6b"
-                        android:layout_marginBottom="8dp"/>
-
-                    <TextView
-                        android:id="@+id/tvFraudProbability"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Tỷ lệ: --"
-                        android:textSize="15sp"
-                        android:textColor="#333"
-                        android:layout_marginBottom="6dp"/>
-
-                    <TextView
-                        android:id="@+id/tvFraudRecommendation"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Khuyến nghị: --"
+                        android:text="Giới tính"
                         android:textSize="14sp"
-                        android:textColor="#555"/>
+                        android:textColor="@color/secondary_text"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+
+                    <Spinner
+                        android:id="@+id/spGender"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@color/surface"
+                        android:padding="12dp"
+                        android:entries="@array/gender_options"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Loại giao dịch"
+                        android:textSize="14sp"
+                        android:textColor="@color/secondary_text"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+
+                    <Spinner
+                        android:id="@+id/spCategory"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@color/surface"
+                        android:padding="12dp"
+                        android:entries="@array/category_options"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Thời gian giao dịch"
+                        android:textSize="14sp"
+                        android:textColor="@color/secondary_text"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+
+                    <EditText
+                        android:id="@+id/etTransactionTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/surface"
+                        android:padding="12dp"
+                        android:hint="HH:MM:SS (VD: 13:05:02)"
+                        android:inputType="text"
+                        android:textSize="16sp"
+                        android:textColor="@color/primary_text"
+                        android:textColorHint="@color/secondary_text"/>
                 </LinearLayout>
 
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
-        <!-- Back Button -->
+        <Button
+            android:id="@+id/btnFraudCheck"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="Phân Tích Fraud"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/primary"
+            android:layout_marginBottom="16dp"/>
+
+        <ProgressBar
+            android:id="@+id/progressFraud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
         <Button
             android:id="@+id/btnBack"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="⬅️ Quay Lại"
+            android:layout_height="50dp"
+            android:text="Quay Lại"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:backgroundTint="#667EEA"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="8dp"/>
+            android:backgroundTint="@color/surface"
+            android:textColor="@color/primary_text"/>
 
     </LinearLayout>
-
 </ScrollView>

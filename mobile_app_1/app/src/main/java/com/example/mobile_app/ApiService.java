@@ -15,11 +15,11 @@ public interface ApiService {
 
     /**
      * Extract and parse transaction from image (OCR + Gemini AI)
-     * Returns 4 fields: amt, gender, category, transaction_time
+     * Returns 7 fields: amt, gender, category, transaction_time, transaction_day, city, age
      * 
      * @param file Image file (multipart)
      * @param language OCR language (default: "vie+eng")
-     * @return API Response with transaction data (4 fields)
+     * @return API Response with transaction data (7 fields)
      */
     @Multipart
     @POST("api/preprocess/extract-and-parse")
@@ -29,10 +29,11 @@ public interface ApiService {
     );
 
     /**
-     * Predict fraud based on 4 parameters (NEW API)
-     * Input: amt (VND), gender (Nam/Nữ), category (VN), transaction_time (HH:MM:SS)
+     * Predict fraud based on 7 parameters (NEW API)
+     * Input: amt (VND), gender (Nam/Nữ), category (VN), transaction_hour (0-23), 
+     *        transaction_day (0-6), age (18-100), city (tỉnh/thành)
      *
-     * @param request request body containing 4 fields
+     * @param request request body containing 7 fields
      * @return fraud prediction response
      */
     @POST("api/model/predict-fraud")

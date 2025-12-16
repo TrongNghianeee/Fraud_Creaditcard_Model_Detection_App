@@ -25,4 +25,83 @@
         <item>mua sắm</item>
         <item>du lịch</item>
     </string-array>
+    
+    <!-- Day of week options (0=Monday, 6=Sunday) -->
+    <string-array name="day_options">
+        <item>Thứ 2</item>
+        <item>Thứ 3</item>
+        <item>Thứ 4</item>
+        <item>Thứ 5</item>
+        <item>Thứ 6</item>
+        <item>Thứ 7</item>
+        <item>Chủ nhật</item>
+    </string-array>
+    
+    <!-- City/Province options (63 provinces of Vietnam) -->
+    <string-array name="city_options">
+        <item>Chọn tỉnh/thành</item>
+        <item>ha noi</item>
+        <item>ho chi minh</item>
+        <item>hai phong</item>
+        <item>da nang</item>
+        <item>can tho</item>
+        <item>an giang</item>
+        <item>ba ria vung tau</item>
+        <item>bac giang</item>
+        <item>bac kan</item>
+        <item>bac lieu</item>
+        <item>bac ninh</item>
+        <item>ben tre</item>
+        <item>binh dinh</item>
+        <item>binh duong</item>
+        <item>binh phuoc</item>
+        <item>binh thuan</item>
+        <item>ca mau</item>
+        <item>cao bang</item>
+        <item>dak lak</item>
+        <item>dak nong</item>
+        <item>dien bien</item>
+        <item>dong nai</item>
+        <item>dong thap</item>
+        <item>gia lai</item>
+        <item>ha giang</item>
+        <item>ha nam</item>
+        <item>ha tinh</item>
+        <item>hai duong</item>
+        <item>hau giang</item>
+        <item>hoa binh</item>
+        <item>hung yen</item>
+        <item>khanh hoa</item>
+        <item>kien giang</item>
+        <item>kon tum</item>
+        <item>lai chau</item>
+        <item>lam dong</item>
+        <item>lang son</item>
+        <item>lao cai</item>
+        <item>long an</item>
+        <item>nam dinh</item>
+        <item>nghe an</item>
+        <item>ninh binh</item>
+        <item>ninh thuan</item>
+        <item>phu tho</item>
+        <item>phu yen</item>
+        <item>quang binh</item>
+        <item>quang nam</item>
+        <item>quang ngai</item>
+        <item>quang ninh</item>
+        <item>quang tri</item>
+        <item>soc trang</item>
+        <item>son la</item>
+        <item>tay ninh</item>
+        <item>thai binh</item>
+        <item>thai nguyen</item>
+        <item>thanh hoa</item>
+        <item>thua thien hue</item>
+        <item>tien giang</item>
+        <item>tra vinh</item>
+        <item>tuyen quang</item>
+        <item>vinh long</item>
+        <item>vinh phuc</item>
+        <item>yen bai</item>
+    </string-array>
 </resources>

@@ -22,6 +22,16 @@
             android:name=".FraudResultActivity"
             android:exported="false"
             android:parentActivityName=".FormActivity" />
+
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+        
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
         
         <activity
             android:name=".FormActivity"

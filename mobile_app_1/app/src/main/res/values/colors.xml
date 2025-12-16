@@ -26,4 +26,11 @@
     <color name="error_text">#C62828</color>
     <color name="warning">#FF9800</color>
     <color name="warning_bg">#FFF3E0</color>
+
+    <!-- Home card colors -->
+    <color name="card_blue">#2563EB</color>
+    <color name="card_green">#16A34A</color>
+    <color name="card_orange">#F59E0B</color>
+    <color name="card_purple">#8B5CF6</color>
+    <color name="card_text_light">#F9FAFB</color>
 </resources>

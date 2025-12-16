@@ -77,11 +77,20 @@ QUY TẮC QUAN TRỌNG:
 - KHÔNG THÊM GIẢI THÍCH, CHÚ THÍCH HAY COMMENT
 - CHỈ TRẢ VỀ 1 OBJECT JSON DUY NHẤT
 
-QUAN TRỌNG - Chỉ trích xuất 4 thông tin sau:
+QUAN TRỌNG - Trích xuất 7 thông tin sau:
 1. amt (số tiền VND) - Bắt buộc phải là số nguyên, không dấu phẩy/chấm
 2. gender (giới tính) - Chỉ "Nam" hoặc "Nữ", phải viết hoa chữ cái đầu
 3. category (loại giao dịch) - Dựa vào nội dung để xếp loại
 4. transaction_time (thời gian giao dịch) - Format HH:MM:SS (ví dụ: 13:05:02)
+5. transaction_day (ngày trong tuần) - **QUAN TRỌNG**: 
+   - Tìm ngày tháng năm trong văn bản (ví dụ: "15/10/2024", "15-10-2024", "15 Oct 2024", "Thứ 3, 15/10/2024")
+   - Tính toán thứ trong tuần dựa trên ngày đó: 0=Thứ 2, 1=Thứ 3, 2=Thứ 4, 3=Thứ 5, 4=Thứ 6, 5=Thứ 7, 6=Chủ nhật
+   - VÍ DỤ: "15/10/2024" là Thứ 3 → trả về 1
+   - VÍ DỤ: "20/10/2024" là Chủ nhật → trả về 6
+   - VÍ DỤ: "14/10/2024" là Thứ 2 → trả về 0
+   - Nếu không tìm thấy ngày tháng năm, để null
+6. city (tỉnh/thành phố) - Tên tỉnh/thành phố VN (viết thường, không dấu)
+7. age (tuổi) - Tuổi của người giao dịch (18-100), nếu không có thông tin thì mặc định 18
 
 DANH SÁCH CATEGORY hợp lệ (chọn 1 trong các loại sau):
 - 'giải trí': Xem phim, karaoke, game, giải trí
@@ -99,14 +108,27 @@ DANH SÁCH CATEGORY hợp lệ (chọn 1 trong các loại sau):
 - 'mua sắm': Mua sắm trực tiếp quần áo, giày dép, phụ kiện
 - 'du lịch': Khách sạn, vé máy bay, tour du lịch
 
+DANH SÁCH CITY (tỉnh/thành phố VN) hợp lệ:
+ha noi, hanoi, ho chi minh, hcm, hai phong, da nang, can tho, an giang, ba ria vung tau, 
+bac giang, bac kan, bac lieu, bac ninh, ben tre, binh dinh, binh duong, binh phuoc, 
+binh thuan, ca mau, cao bang, dak lak, dak nong, dien bien, dong nai, dong thap, gia lai, 
+ha giang, ha nam, ha tinh, hai duong, hau giang, hoa binh, hung yen, khanh hoa, kien giang, 
+kon tum, lai chau, lam dong, lang son, lao cai, long an, nam dinh, nghe an, ninh binh, 
+ninh thuan, phu tho, phu yen, quang binh, quang nam, quang ngai, quang ninh, quang tri, 
+soc trang, son la, tay ninh, thai binh, thai nguyen, thanh hoa, thua thien hue, tien giang, 
+tra vinh, tuyen quang, vinh long, vinh phuc, yen bai
+
 LƯU Ý:
 - Nếu không tìm thấy thông tin gender, mặc định là null
 - Nếu không xác định được category, mặc định là 'khác'
 - Số tiền (amt) phải là số nguyên VND, không có dấu
 - Thời gian (transaction_time) phải theo format HH:MM:SS (giờ:phút:giây)
+- transaction_day: 0=Thứ 2, 1=Thứ 3, 2=Thứ 4, 3=Thứ 5, 4=Thứ 6, 5=Thứ 7, 6=Chủ nhật
+- city: Phải viết thường, không dấu, phải nằm trong danh sách city hợp lệ. Nếu không xác định được thì để null
+- age: Nếu có thông tin về tuổi/năm sinh trong văn bản thì tính tuổi, nếu không có thì mặc định 18
 - TUYỆT ĐỐI CHỈ TRẢ VỀ JSON, KHÔNG TEXT THỪA"""
 
-        user_prompt = f"""Phân tích văn bản giao dịch sau và trích xuất 4 thông tin:
+        user_prompt = f"""Phân tích văn bản giao dịch sau và trích xuất 7 thông tin:
 
 {ocr_text}
 
@@ -115,7 +137,10 @@ QUAN TRỌNG: Trả về JSON với CẤU TRÚC CHÍNH XÁC SAU (KHÔNG thay đ�
   "amt": <số tiền VND - số nguyên, VD: 500000>,
   "gender": "<Nam hoặc Nữ hoặc null>",
   "category": "<loại giao dịch>",
-  "transaction_time": "<HH:MM:SS - VD: 13:05:02>"
+  "transaction_time": "<HH:MM:SS - VD: 13:05:02>",
+  "transaction_day": <0-6, 0=Thứ 2, 6=Chủ nhật>,
+  "city": "<tên tỉnh/thành phố VN, viết thường không dấu>",
+  "age": <tuổi 18-100, mặc định 18 nếu không có thông tin>
 }}
 
 VÍ DỤ OUTPUT ĐÚNG:
@@ -123,21 +148,35 @@ VÍ DỤ OUTPUT ĐÚNG:
   "amt": 500000,
   "gender": "Nam",
   "category": "xăng dầu",
-  "transaction_time": "13:05:02"
+  "transaction_time": "13:05:02",
+  "transaction_day": 5,
+  "city": "ha noi",
+  "age": 28
 }}
 
-TUYỆT ĐỐI KHÔNG DÙNG:
-- "transaction_hour" (SAI - không được phép)
-- "time" (SAI)
-- "hour" (SAI)
-
-CHỈ DÙNG KEY: "transaction_time" với format "HH:MM:SS"
+VÍ DỤ CÁCH TÍNH transaction_day:
+- Văn bản: "Giao dịch ngày 15/10/2024 lúc 13:05:02" → 15/10/2024 là Thứ 3 → transaction_day = 1
+- Văn bản: "20-10-2024 15:30:00" → 20/10/2024 là Chủ nhật → transaction_day = 6
+- Văn bản: "Thứ 2, 14/10/2024" → Thứ 2 → transaction_day = 0
+- Văn bản: "Số tiền: 500.000đ, thời gian: 13:05" (KHÔNG có ngày) → transaction_day = null
 
 CHÚ Ý:
 - amt PHẢI là số nguyên VND (ví dụ: 500000, không phải "500,000" hay "500.000")
 - gender CHỈ có thể là "Nam", "Nữ" hoặc null
 - category PHẢI chọn từ danh sách category hợp lệ ở trên
-- transaction_time PHẢI có key chính xác là "transaction_time" và format "HH:MM:SS" (ví dụ: "13:05:02", "09:30:15")"""
+- transaction_time PHẢI có key chính xác là "transaction_time" và format "HH:MM:SS" (ví dụ: "13:05:02", "09:30:15")
+- transaction_day PHẢI tính toán từ ngày tháng năm trong văn bản:
+  * TÌM ngày tháng năm (ví dụ: "15/10/2024", "15-10-2024", "Thứ 3 15/10/2024")
+  * TÍNH thứ trong tuần: 0=Thứ 2, 1=Thứ 3, 2=Thứ 4, 3=Thứ 5, 4=Thứ 6, 5=Thứ 7, 6=Chủ nhật
+  * VÍ DỤ CÁCH TÍNH:
+    - "14/10/2024" (hoặc "14-10-2024" hoặc "14 Oct 2024") → Thứ 2 → transaction_day = 0
+    - "15/10/2024" → Thứ 3 → transaction_day = 1
+    - "16/10/2024" → Thứ 4 → transaction_day = 2
+    - "20/10/2024" → Chủ nhật → transaction_day = 6
+  * Nếu văn bản có ghi "Thứ 3", "Thứ Tư", "Chủ nhật" thì dùng trực tiếp
+  * Nếu KHÔNG có ngày tháng năm trong văn bản, để null
+- city PHẢI viết thường, không dấu, thuộc danh sách tỉnh/thành VN (ha noi, ho chi minh, da nang, etc.)
+- age PHẢI là số nguyên 18-100, nếu không có thông tin thì để 18"""
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -183,17 +222,41 @@ CHÚ Ý:
                     current_app.logger.warning(f"AI returned invalid 'transaction_hour'={hour}, setting transaction_time to null")
             
             # Validate required fields
-            required_fields = ['amt', 'gender', 'category', 'transaction_time']
+            required_fields = ['amt', 'gender', 'category', 'transaction_time', 
+                             'transaction_day', 'city', 'age']
             
             for field in required_fields:
                 if field not in parsed_data:
-                    parsed_data[field] = None
+                    # Set defaults for new fields
+                    if field == 'transaction_day':
+                        parsed_data[field] = None
+                    elif field == 'city':
+                        parsed_data[field] = None
+                    elif field == 'age':
+                        parsed_data[field] = 18  # Default age
+                    else:
+                        parsed_data[field] = None
             
             # Additional validation
             valid_categories = [
                 'giải trí', 'ăn uống', 'xăng dầu', 'siêu thị online', 'siêu thị',
                 'sức khỏe', 'nội thất', 'trẻ em', 'khác online', 'khác',
                 'chăm sóc cá nhân', 'mua sắm online', 'mua sắm', 'du lịch'
+            ]
+            
+            # Valid cities (63 provinces & cities of Vietnam)
+            valid_cities = [
+                'ha noi', 'hanoi', 'ho chi minh', 'hcm', 'hai phong', 'da nang', 'can tho',
+                'an giang', 'ba ria vung tau', 'bac giang', 'bac kan', 'bac lieu', 'bac ninh',
+                'ben tre', 'binh dinh', 'binh duong', 'binh phuoc', 'binh thuan', 'ca mau',
+                'cao bang', 'dak lak', 'dak nong', 'dien bien', 'dong nai', 'dong thap',
+                'gia lai', 'ha giang', 'ha nam', 'ha tinh', 'hai duong', 'hau giang',
+                'hoa binh', 'hung yen', 'khanh hoa', 'kien giang', 'kon tum', 'lai chau',
+                'lam dong', 'lang son', 'lao cai', 'long an', 'nam dinh', 'nghe an',
+                'ninh binh', 'ninh thuan', 'phu tho', 'phu yen', 'quang binh', 'quang nam',
+                'quang ngai', 'quang ninh', 'quang tri', 'soc trang', 'son la', 'tay ninh',
+                'thai binh', 'thai nguyen', 'thanh hoa', 'thua thien hue', 'tien giang',
+                'tra vinh', 'tuyen quang', 'vinh long', 'vinh phuc', 'yen bai'
             ]
             
             # Ensure category is valid, default to 'khác' if not
@@ -205,6 +268,43 @@ CHÚ Ý:
             if parsed_data.get('gender') and parsed_data['gender'] not in ['Nam', 'Nữ']:
                 current_app.logger.warning(f"Invalid gender '{parsed_data.get('gender')}', setting to null")
                 parsed_data['gender'] = None
+            
+            # Validate city
+            if parsed_data.get('city'):
+                city_lower = str(parsed_data['city']).lower().strip()
+                if city_lower not in valid_cities:
+                    current_app.logger.warning(f"Invalid city '{parsed_data.get('city')}', setting to null")
+                    parsed_data['city'] = None
+                else:
+                    parsed_data['city'] = city_lower  # Normalize to lowercase
+            
+            # Validate transaction_day (0-6)
+            if parsed_data.get('transaction_day') is not None:
+                try:
+                    day = int(parsed_data['transaction_day'])
+                    if not (0 <= day <= 6):
+                        current_app.logger.warning(f"Invalid transaction_day '{day}', must be 0-6, setting to null")
+                        parsed_data['transaction_day'] = None
+                    else:
+                        parsed_data['transaction_day'] = day
+                except (ValueError, TypeError):
+                    current_app.logger.warning(f"Invalid transaction_day '{parsed_data.get('transaction_day')}', setting to null")
+                    parsed_data['transaction_day'] = None
+            
+            # Validate age (18-100)
+            if parsed_data.get('age') is not None:
+                try:
+                    age = int(parsed_data['age'])
+                    if not (18 <= age <= 100):
+                        current_app.logger.warning(f"Invalid age '{age}', must be 18-100, defaulting to 18")
+                        parsed_data['age'] = 18
+                    else:
+                        parsed_data['age'] = age
+                except (ValueError, TypeError):
+                    current_app.logger.warning(f"Invalid age '{parsed_data.get('age')}', defaulting to 18")
+                    parsed_data['age'] = 18
+            else:
+                parsed_data['age'] = 18  # Default age
             
             # Validate transaction_time format (HH:MM:SS)
             if parsed_data.get('transaction_time'):

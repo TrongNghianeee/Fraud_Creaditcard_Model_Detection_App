@@ -56,6 +56,12 @@ public class FraudResultActivity extends AppCompatActivity {
         String gender = getIntent().getStringExtra("gender");
         String category = getIntent().getStringExtra("category");
         String transactionTime = getIntent().getStringExtra("transaction_time");
+        int transactionHour = getIntent().getIntExtra("transaction_hour", -1);
+        int transactionDay = getIntent().getIntExtra("transaction_day", -1);
+        int transactionMonth = getIntent().getIntExtra("transaction_month", -1);
+        int age = getIntent().getIntExtra("age", -1);
+        String city = getIntent().getStringExtra("city");
+        long cityPop = getIntent().getLongExtra("city_pop", 0L);
         
         // Set fraud status with color coding
         if (isFraud) {
@@ -91,7 +97,27 @@ public class FraudResultActivity extends AppCompatActivity {
             convertedInfo.append("Loại giao dịch: ").append(category).append("\n");
         }
         if (transactionTime != null && !transactionTime.isEmpty()) {
-            convertedInfo.append("Thời gian: ").append(transactionTime);
+            convertedInfo.append("Thời gian: ").append(transactionTime).append("\n");
+        }
+        if (transactionHour >= 0) {
+            convertedInfo.append("Giờ: ").append(transactionHour).append("h\n");
+        }
+        if (transactionDay >= 0) {
+            String[] dayNames = new String[]{"Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"};
+            String dayName = (transactionDay >=0 && transactionDay < dayNames.length) ? dayNames[transactionDay] : String.valueOf(transactionDay);
+            convertedInfo.append("Ngày trong tuần: ").append(dayName).append("\n");
+        }
+        if (transactionMonth > 0) {
+            convertedInfo.append("Tháng: ").append(transactionMonth).append("\n");
+        }
+        if (age > 0) {
+            convertedInfo.append("Tuổi: ").append(age).append("\n");
+        }
+        if (city != null && !city.isEmpty()) {
+            convertedInfo.append("Tỉnh/TP: ").append(city).append("\n");
+        }
+        if (cityPop > 0) {
+            convertedInfo.append("Dân số: ").append(decimalFormat.format(cityPop));
         }
         
         if (convertedInfo.length() > 0) {

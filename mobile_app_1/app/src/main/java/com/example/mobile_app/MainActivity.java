@@ -5,16 +5,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,10 +20,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.card.MaterialCardView;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.Random;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -46,11 +46,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
 
     // UI Components
-    private ImageView imagePreview;
-    private TextView textPlaceholder;
-    private Button btnUpload;
-    private Button btnAnalyze;
-    private Button btnViewResults;
+    private MaterialCardView cardAnalyze;
+    private MaterialCardView cardSimulate;
+    private MaterialCardView cardSettings;
+    private MaterialCardView cardHistory;
     private ProgressBar progressBar;
     private TextView textStatus;
 
@@ -62,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
     private String extractedGender;
     private String extractedCategory;
     private String extractedTransactionTime;
+    private Integer extractedTransactionDay;
+    private String extractedCity;
+    private Integer extractedAge;
 
     // Activity launcher for image picker
     private ActivityResultLauncher<Intent> imagePickerLauncher;
@@ -88,17 +90,12 @@ public class MainActivity extends AppCompatActivity {
      * Initialize all UI components
      */
     private void initViews() {
-        imagePreview = findViewById(R.id.imagePreview);
-        textPlaceholder = findViewById(R.id.textPlaceholder);
-        btnUpload = findViewById(R.id.btnUpload);
-        btnAnalyze = findViewById(R.id.btnAnalyze);
-        btnViewResults = findViewById(R.id.btnViewResults);
+        cardAnalyze = findViewById(R.id.cardAnalyze);
+        cardSimulate = findViewById(R.id.cardSimulate);
+        cardSettings = findViewById(R.id.cardSettings);
+        cardHistory = findViewById(R.id.cardHistory);
         progressBar = findViewById(R.id.progressBar);
         textStatus = findViewById(R.id.textStatus);
-
-        // Initially disable buttons
-        btnAnalyze.setEnabled(false);
-        btnViewResults.setEnabled(false);
     }
 
     /**
@@ -112,9 +109,8 @@ public class MainActivity extends AppCompatActivity {
                         Intent data = result.getData();
                         if (data != null && data.getData() != null) {
                             selectedImageUri = data.getData();
-                            displayImage(selectedImageUri);
-                            btnAnalyze.setEnabled(true);
-                            textStatus.setText("Ảnh đã sẵn sàng. Nhấn 'Phân tích giao dịch'");
+                            textStatus.setText("Đang phân tích tự động...");
+                            uploadAndScan();
                         }
                     }
                 }
@@ -122,12 +118,63 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup button click listeners
+     * Setup card click listeners
      */
     private void setupClickListeners() {
-        btnUpload.setOnClickListener(v -> openImagePicker());
-        btnAnalyze.setOnClickListener(v -> uploadAndScan());
-        btnViewResults.setOnClickListener(v -> navigateToFormActivity());
+        cardAnalyze.setOnClickListener(v -> openImagePicker());
+        cardSimulate.setOnClickListener(v -> launchSimulation());
+        cardSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        cardHistory.setOnClickListener(v -> startActivity(new Intent(this, HistoryActivity.class)));
+    }
+
+    /**
+     * Launch simulated transaction with current system time, weekday, random amount,
+     * default category, and demographics from saved profile or fallbacks.
+     */
+    private void launchSimulation() {
+        Log.d(TAG, "Launching simulated transaction");
+
+        // Defaults (system fallback)
+        String gender = SettingsManager.getDefaultGender(this);
+        String city = SettingsManager.getDefaultCity(this);
+        Integer age = SettingsManager.getDefaultAge(this);
+
+        if (gender == null || gender.trim().isEmpty()) {
+            gender = "Nam";
+        }
+        if (city == null || city.trim().isEmpty()) {
+            city = "ho chi minh";
+        }
+        if (age == null || age < 18) {
+            age = 18;
+        }
+
+        // Random amount in VND
+        int min = 100_000;
+        int max = 5_000_000;
+        int randomAmt = new Random().nextInt(max - min + 1) + min;
+
+        // Current time HH:mm:ss
+        Calendar cal = Calendar.getInstance();
+        String time = String.format(Locale.getDefault(), "%02d:%02d:%02d",
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE),
+                cal.get(Calendar.SECOND));
+
+        // Day of week: Calendar.SUNDAY=1 ... SATURDAY=7 => convert to 0=Mon ... 6=Sun
+        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK); // 1..7
+        int transactionDay = (dayOfWeek + 5) % 7; // Sunday(1)->6, Monday(2)->0
+
+        Intent intent = new Intent(this, FormActivity.class);
+        intent.putExtra("amt", String.valueOf(randomAmt));
+        intent.putExtra("gender", gender);
+        intent.putExtra("category", "xăng dầu");
+        intent.putExtra("transaction_time", time);
+        intent.putExtra("transaction_day", transactionDay);
+        intent.putExtra("city", city.toLowerCase(Locale.ROOT));
+        intent.putExtra("age", age);
+
+        startActivity(intent);
     }
 
     /**
@@ -152,29 +199,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Display selected image in ImageView
-     */
-    private void displayImage(Uri imageUri) {
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            imagePreview.setImageBitmap(bitmap);
-            imagePreview.setVisibility(View.VISIBLE);
-            textPlaceholder.setVisibility(View.GONE);
-        } catch (IOException e) {
-            Log.e(TAG, "Error loading image: " + e.getMessage());
-            Toast.makeText(this, "Lỗi khi tải ảnh", Toast.LENGTH_SHORT).show();
-            textPlaceholder.setVisibility(View.VISIBLE);
-        }
-    }
-
-    /**
      * Upload image and scan transaction
      */
     private void uploadAndScan() {
         if (selectedImageUri == null) {
             Toast.makeText(this, "Vui lòng chọn ảnh trước", Toast.LENGTH_SHORT).show();
-            textPlaceholder.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -228,11 +257,8 @@ public class MainActivity extends AppCompatActivity {
                                 // Success - navigate to FormActivity
                                 Log.d(TAG, "CASE 1: Both OCR and AI parsing succeeded");
                                 textStatus.setText("✓ Phân tích thành công!");
-                                
-                                // Save extracted data and enable "View Results" button
+                                // Save extracted data và chuyển thẳng sang Form
                                 saveExtractedData(apiResponse);
-                                btnViewResults.setEnabled(true);
-                                
                                 navigateToFormActivity(apiResponse);
                             } else if (apiResponse.isSuccess()) {
                                 // OCR success but AI parsing failed - still allow user to continue
@@ -249,11 +275,8 @@ public class MainActivity extends AppCompatActivity {
                                     Log.d(TAG, "OCR text extracted: " + apiResponse.getOcrText());
                                 }
                                 
-                                // Save extracted data and enable "View Results" button
+                                // Save extracted data và chuyển sang Form để nhập tay
                                 saveExtractedData(apiResponse);
-                                btnViewResults.setEnabled(true);
-                                
-                                // Still navigate to FormActivity for manual input
                                 navigateToFormActivity(apiResponse);
                             } else {
                                 // Both failed
@@ -352,8 +375,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        btnAnalyze.setEnabled(!show);
-        btnUpload.setEnabled(!show);
+        cardAnalyze.setEnabled(!show);
     }
 
     /**
@@ -369,11 +391,17 @@ public class MainActivity extends AppCompatActivity {
             extractedGender = (transaction.getGender() != null) ? transaction.getGender() : "";
             extractedCategory = (transaction.getCategory() != null) ? transaction.getCategory() : "";
             extractedTransactionTime = (transaction.getTransactionTime() != null) ? transaction.getTransactionTime() : "";
+            extractedTransactionDay = transaction.getTransactionDay();
+            extractedCity = transaction.getCity();
+            extractedAge = transaction.getAge();
         } else {
             extractedAmt = "0";
             extractedGender = "";
             extractedCategory = "";
             extractedTransactionTime = "";
+            extractedTransactionDay = null;
+            extractedCity = null;
+            extractedAge = null;
         }
     }
 
@@ -385,12 +413,21 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "navigateToFormActivity() - no parameters");
             Intent intent = new Intent(MainActivity.this, FormActivity.class);
             
-            // Pass saved extracted data if available
+            // Pass saved extracted data if available (all 7 fields)
             if (extractedAmt != null) {
                 intent.putExtra("amt", extractedAmt);
                 intent.putExtra("gender", extractedGender);
                 intent.putExtra("category", extractedCategory);
                 intent.putExtra("transaction_time", extractedTransactionTime);
+                if (extractedTransactionDay != null) {
+                    intent.putExtra("transaction_day", extractedTransactionDay);
+                }
+                if (extractedCity != null) {
+                    intent.putExtra("city", extractedCity);
+                }
+                if (extractedAge != null) {
+                    intent.putExtra("age", extractedAge);
+                }
             }
             
             startActivity(intent);
@@ -401,7 +438,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Navigate to FormActivity with transaction data (4 fields only)
+     * Navigate to FormActivity with transaction data (7 fields)
      */
     private void navigateToFormActivity(ApiResponse apiResponse) {
         try {
@@ -412,7 +449,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Transaction data: " + (transaction != null ? "NOT NULL" : "NULL"));
             
             if (transaction != null) {
-                // Pass only 4 fields: amt, gender, category, transaction_time
+                // Pass all 7 fields: amt, gender, category, transaction_time, transaction_day, city, age
                 // Safe conversion for Double to double
                 Double amtValue = transaction.getAmt();
                 double amt = (amtValue != null) ? amtValue : 0.0;
@@ -420,14 +457,29 @@ public class MainActivity extends AppCompatActivity {
                 String gender = (transaction.getGender() != null) ? transaction.getGender() : "";
                 String category = (transaction.getCategory() != null) ? transaction.getCategory() : "";
                 String transactionTime = (transaction.getTransactionTime() != null) ? transaction.getTransactionTime() : "";
+                Integer transactionDay = transaction.getTransactionDay();
+                String city = transaction.getCity();
+                Integer age = transaction.getAge();
                 
                 Log.d(TAG, "Parsed values - amt: " + amt + ", gender: " + gender + 
-                      ", category: " + category + ", time: " + transactionTime);
+                      ", category: " + category + ", time: " + transactionTime +
+                      ", day: " + transactionDay + ", city: " + city + ", age: " + age);
                 
                 intent.putExtra("amt", String.valueOf(amt));  // Convert to String to avoid null issues
                 intent.putExtra("gender", gender);
                 intent.putExtra("category", category);
                 intent.putExtra("transaction_time", transactionTime);
+                
+                // Add new fields
+                if (transactionDay != null) {
+                    intent.putExtra("transaction_day", transactionDay);
+                }
+                if (city != null && !city.isEmpty()) {
+                    intent.putExtra("city", city);
+                }
+                if (age != null) {
+                    intent.putExtra("age", age);
+                }
                 
                 Log.d(TAG, "Intent extras added successfully");
             } else {

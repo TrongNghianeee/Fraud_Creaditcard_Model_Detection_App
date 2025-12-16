@@ -54,10 +54,34 @@ public class FraudResponse {
         @SerializedName("transaction_time")
         private String transactionTime;
 
+    @SerializedName("transaction_hour")
+    private Integer transactionHour;
+
+    @SerializedName("transaction_day")
+    private Integer transactionDay;
+
+    @SerializedName("transaction_month")
+    private Integer transactionMonth;
+
+    @SerializedName("age")
+    private Integer age;
+
+    @SerializedName("city")
+    private String city;
+
+    @SerializedName("city_pop")
+    private Long cityPop;
+
         public double getAmtVnd() { return amtVnd; }
         public double getAmtUsd() { return amtUsd; }
         public String getGender() { return gender; }
         public String getCategory() { return category; }
         public String getTransactionTime() { return transactionTime; }
+        public Integer getTransactionHour() { return transactionHour; }
+        public Integer getTransactionDay() { return transactionDay; }
+        public Integer getTransactionMonth() { return transactionMonth; }
+        public Integer getAge() { return age; }
+        public String getCity() { return city; }
+        public Long getCityPop() { return cityPop; }
     }
 }

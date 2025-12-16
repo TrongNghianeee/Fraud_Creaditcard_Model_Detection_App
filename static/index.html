@@ -132,6 +132,10 @@
             margin-top: 15px;
         }
 
+        .btn.secondary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
@@ -191,22 +195,22 @@
             margin-bottom: 10px;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 8px;
+        .header {
             text-align: center;
+            color: white;
+            margin-bottom: 30px;
         }
 
-        .stat-item .label {
-            color: #666;
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
             font-size: 0.9em;
             margin-bottom: 5px;
         }
@@ -528,8 +532,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 OCR Text Extraction</h1>
-            <p>Upload ảnh để trích xuất văn bản bằng Tesseract OCR</p>
+            <h1 id="pageTitle">🔍 OCR Text Extraction</h1>
+            <p id="pageSubtitle">Upload ảnh để trích xuất văn bản bằng Tesseract OCR</p>
         </div>
 
         <div class="main-content">
@@ -566,6 +570,10 @@
 
                 <button class="btn" id="extractBtn" disabled>
                     🚀 Phân tích giao dịch
+                </button>
+
+                <button class="btn secondary" id="simulateBtn">
+                    🧪 Mô phỏng giao dịch (không cần ảnh)
                 </button>
 
                 <div class="loading" id="loading">
@@ -626,6 +634,7 @@
         const fileInput = document.getElementById('fileInput');
         const previewArea = document.getElementById('previewArea');
         const extractBtn = document.getElementById('extractBtn');
+        const simulateBtn = document.getElementById('simulateBtn');
         const loading = document.getElementById('loading');
         const aiLoading = document.getElementById('aiLoading');
         const error = document.getElementById('error');
@@ -637,6 +646,15 @@
         const fraudBtn = document.getElementById('fraudBtn');
         const fraudLoading = document.getElementById('fraudLoading');
         const fraudResult = document.getElementById('fraudResult');
+        const pageTitle = document.getElementById('pageTitle');
+        const pageSubtitle = document.getElementById('pageSubtitle');
+        const SUCCESS_TEXT_EXTRACT = 'Trích xuất thành công!';
+        const SUCCESS_TEXT_SIMULATE = 'Đã tạo giao dịch mô phỏng';
+        const DEFAULT_CATEGORY = 'xăng dầu';
+        const DEFAULT_PROFILE = { gender: 'Nam', city: 'ho chi minh', age: 18 };
+        let currentMode = 'extract';
+
+        setMode('extract');
 
         let selectedFile = null;
         let currentAmountUSD = null;
@@ -659,6 +677,51 @@
 
         function toTextValue(value) {
             return escapeHtml(value ?? '');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'simulate') {
+                pageTitle.textContent = '🧪 Giao dịch mô phỏng';
+                pageSubtitle.textContent = 'Tạo nhanh giao dịch mẫu bằng dữ liệu hệ thống và hồ sơ mặc định';
+            } else {
+                pageTitle.textContent = '🔍 OCR Text Extraction';
+                pageSubtitle.textContent = 'Upload ảnh để trích xuất văn bản bằng Tesseract OCR';
+            }
+        }
+
+        function loadDefaultProfile() {
+            try {
+                const stored = localStorage.getItem('default_profile');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    return {
+                        gender: parsed.gender || DEFAULT_PROFILE.gender,
+                        city: parsed.city || DEFAULT_PROFILE.city,
+                        age: parsed.age || DEFAULT_PROFILE.age
+                    };
+                }
+            } catch (err) {
+                console.warn('Cannot read default profile from localStorage', err);
+            }
+            return { ...DEFAULT_PROFILE };
+        }
+
+        function randomAmountVnd() {
+            const min = 100000;
+            const max = 5000000;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function getCurrentTimeAndDay() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const time = `${hours}:${minutes}:${seconds}`;
+            const sundayIsZero = now.getDay();
+            const transactionDay = (sundayIsZero + 6) % 7; // Convert JS Sunday=0 to Monday=0
+            return { time, transactionDay };
         }
 
         function parseFlexibleNumber(value) {
@@ -734,6 +797,11 @@
             handleFile(e.target.files[0]);
         });
 
+        // Simulate transaction without uploading image
+        simulateBtn.addEventListener('click', () => {
+            runSimulation();
+        });
+
         // Drag and drop
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -760,6 +828,7 @@
                 return;
             }
 
+            setMode('extract');
             selectedFile = file;
             extractBtn.disabled = false;
 
@@ -775,10 +844,37 @@
             hideSuccess();
         }
 
+        function runSimulation() {
+            setMode('simulate');
+            hideError();
+            hideSuccess();
+            hideLoading();
+            hideAiLoading();
+            selectedFile = null;
+            previewArea.innerHTML = '';
+
+            const { time, transactionDay } = getCurrentTimeAndDay();
+            const profile = loadDefaultProfile();
+
+            const simulatedTransaction = {
+                amt: randomAmountVnd(),
+                gender: profile.gender,
+                category: DEFAULT_CATEGORY,
+                transaction_time: time,
+                transaction_day: transactionDay,
+                city: profile.city,
+                age: profile.age
+            };
+
+            displayResult({ transaction: simulatedTransaction });
+            showSuccess(SUCCESS_TEXT_SIMULATE);
+        }
+
         // Extract text
         extractBtn.addEventListener('click', async () => {
             if (!selectedFile) return;
 
+            setMode('extract');
             showLoading();
             hideError();
             hideSuccess();
@@ -800,7 +896,7 @@
 
                 if (data.success && data.ai_parsing_success) {
                     displayResult(data);
-                    showSuccess();
+                    showSuccess(SUCCESS_TEXT_EXTRACT);
                 } else if (data.success && !data.ai_parsing_success) {
                     showError('OCR thành công nhưng AI không thể phân tích: ' + (data.ai_error || 'Unknown error'));
                 } else {
@@ -835,11 +931,14 @@
         }
 
         function displayTransaction(data) {
-            // Data từ API mới có 4 trường: amt, gender, category, transaction_time (HH:MM:SS)
+            // Data từ API mới có 7 trường: amt, gender, category, transaction_time, transaction_day, city, age
             const amtValue = toAttributeValue(data.amt);
             const genderValue = toAttributeValue(data.gender || '');
             const categoryValue = toAttributeValue(data.category || 'khác');
             const timeValue = toAttributeValue(data.transaction_time || '');
+            const dayValue = toAttributeValue(data.transaction_day ?? '');
+            const cityValue = toAttributeValue(data.city || '');
+            const ageValue = toAttributeValue(data.age || '18');
 
             transactionInfo.innerHTML = `
                 <div class="info-item highlight">
@@ -848,7 +947,7 @@
                 </div>
 
                 <div class="info-item">
-                    <div class="label">� Giới tính</div>
+                    <div class="label">👤 Giới tính</div>
                     <select id="genderInput">
                         <option value="" ${genderValue === '' ? 'selected' : ''}>-- Không xác định --</option>
                         <option value="Nam" ${genderValue === 'Nam' ? 'selected' : ''}>Nam</option>
@@ -886,21 +985,115 @@
                         Format: Giờ:Phút:Giây (VD: 13:05:02)
                     </div>
                 </div>
+
+                <div class="info-item">
+                    <div class="label">📅 Ngày trong tuần</div>
+                    <select id="dayInput">
+                        <option value="" ${dayValue === '' ? 'selected' : ''}>-- Không xác định --</option>
+                        <option value="0" ${dayValue === '0' ? 'selected' : ''}>Thứ 2 (Monday)</option>
+                        <option value="1" ${dayValue === '1' ? 'selected' : ''}>Thứ 3 (Tuesday)</option>
+                        <option value="2" ${dayValue === '2' ? 'selected' : ''}>Thứ 4 (Wednesday)</option>
+                        <option value="3" ${dayValue === '3' ? 'selected' : ''}>Thứ 5 (Thursday)</option>
+                        <option value="4" ${dayValue === '4' ? 'selected' : ''}>Thứ 6 (Friday)</option>
+                        <option value="5" ${dayValue === '5' ? 'selected' : ''}>Thứ 7 (Saturday)</option>
+                        <option value="6" ${dayValue === '6' ? 'selected' : ''}>Chủ nhật (Sunday)</option>
+                    </select>
+                    <div style="font-size: 0.75em; color: #888; margin-top: 5px;">
+                        0=Thứ 2, 6=Chủ nhật
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">🏙️ Tỉnh/Thành phố</div>
+                    <select id="cityInput">
+                        <option value="" ${cityValue === '' ? 'selected' : ''}>-- Không xác định --</option>
+                        <option value="ha noi" ${cityValue === 'ha noi' || cityValue === 'hanoi' ? 'selected' : ''}>Hà Nội</option>
+                        <option value="ho chi minh" ${cityValue === 'ho chi minh' || cityValue === 'hcm' ? 'selected' : ''}>Hồ Chí Minh</option>
+                        <option value="da nang" ${cityValue === 'da nang' ? 'selected' : ''}>Đà Nẵng</option>
+                        <option value="hai phong" ${cityValue === 'hai phong' ? 'selected' : ''}>Hải Phòng</option>
+                        <option value="can tho" ${cityValue === 'can tho' ? 'selected' : ''}>Cần Thơ</option>
+                        <option value="an giang" ${cityValue === 'an giang' ? 'selected' : ''}>An Giang</option>
+                        <option value="ba ria vung tau" ${cityValue === 'ba ria vung tau' ? 'selected' : ''}>Bà Rịa - Vũng Tàu</option>
+                        <option value="bac giang" ${cityValue === 'bac giang' ? 'selected' : ''}>Bắc Giang</option>
+                        <option value="bac kan" ${cityValue === 'bac kan' ? 'selected' : ''}>Bắc Kạn</option>
+                        <option value="bac lieu" ${cityValue === 'bac lieu' ? 'selected' : ''}>Bạc Liêu</option>
+                        <option value="bac ninh" ${cityValue === 'bac ninh' ? 'selected' : ''}>Bắc Ninh</option>
+                        <option value="ben tre" ${cityValue === 'ben tre' ? 'selected' : ''}>Bến Tre</option>
+                        <option value="binh dinh" ${cityValue === 'binh dinh' ? 'selected' : ''}>Bình Định</option>
+                        <option value="binh duong" ${cityValue === 'binh duong' ? 'selected' : ''}>Bình Dương</option>
+                        <option value="binh phuoc" ${cityValue === 'binh phuoc' ? 'selected' : ''}>Bình Phước</option>
+                        <option value="binh thuan" ${cityValue === 'binh thuan' ? 'selected' : ''}>Bình Thuận</option>
+                        <option value="ca mau" ${cityValue === 'ca mau' ? 'selected' : ''}>Cà Mau</option>
+                        <option value="cao bang" ${cityValue === 'cao bang' ? 'selected' : ''}>Cao Bằng</option>
+                        <option value="dak lak" ${cityValue === 'dak lak' ? 'selected' : ''}>Đắk Lắk</option>
+                        <option value="dak nong" ${cityValue === 'dak nong' ? 'selected' : ''}>Đắk Nông</option>
+                        <option value="dien bien" ${cityValue === 'dien bien' ? 'selected' : ''}>Điện Biên</option>
+                        <option value="dong nai" ${cityValue === 'dong nai' ? 'selected' : ''}>Đồng Nai</option>
+                        <option value="dong thap" ${cityValue === 'dong thap' ? 'selected' : ''}>Đồng Tháp</option>
+                        <option value="gia lai" ${cityValue === 'gia lai' ? 'selected' : ''}>Gia Lai</option>
+                        <option value="ha giang" ${cityValue === 'ha giang' ? 'selected' : ''}>Hà Giang</option>
+                        <option value="ha nam" ${cityValue === 'ha nam' ? 'selected' : ''}>Hà Nam</option>
+                        <option value="ha tinh" ${cityValue === 'ha tinh' ? 'selected' : ''}>Hà Tĩnh</option>
+                        <option value="hai duong" ${cityValue === 'hai duong' ? 'selected' : ''}>Hải Dương</option>
+                        <option value="hau giang" ${cityValue === 'hau giang' ? 'selected' : ''}>Hậu Giang</option>
+                        <option value="hoa binh" ${cityValue === 'hoa binh' ? 'selected' : ''}>Hòa Bình</option>
+                        <option value="hung yen" ${cityValue === 'hung yen' ? 'selected' : ''}>Hưng Yên</option>
+                        <option value="khanh hoa" ${cityValue === 'khanh hoa' ? 'selected' : ''}>Khánh Hòa</option>
+                        <option value="kien giang" ${cityValue === 'kien giang' ? 'selected' : ''}>Kiên Giang</option>
+                        <option value="kon tum" ${cityValue === 'kon tum' ? 'selected' : ''}>Kon Tum</option>
+                        <option value="lai chau" ${cityValue === 'lai chau' ? 'selected' : ''}>Lai Châu</option>
+                        <option value="lam dong" ${cityValue === 'lam dong' ? 'selected' : ''}>Lâm Đồng</option>
+                        <option value="lang son" ${cityValue === 'lang son' ? 'selected' : ''}>Lạng Sơn</option>
+                        <option value="lao cai" ${cityValue === 'lao cai' ? 'selected' : ''}>Lào Cai</option>
+                        <option value="long an" ${cityValue === 'long an' ? 'selected' : ''}>Long An</option>
+                        <option value="nam dinh" ${cityValue === 'nam dinh' ? 'selected' : ''}>Nam Định</option>
+                        <option value="nghe an" ${cityValue === 'nghe an' ? 'selected' : ''}>Nghệ An</option>
+                        <option value="ninh binh" ${cityValue === 'ninh binh' ? 'selected' : ''}>Ninh Bình</option>
+                        <option value="ninh thuan" ${cityValue === 'ninh thuan' ? 'selected' : ''}>Ninh Thuận</option>
+                        <option value="phu tho" ${cityValue === 'phu tho' ? 'selected' : ''}>Phú Thọ</option>
+                        <option value="phu yen" ${cityValue === 'phu yen' ? 'selected' : ''}>Phú Yên</option>
+                        <option value="quang binh" ${cityValue === 'quang binh' ? 'selected' : ''}>Quảng Bình</option>
+                        <option value="quang nam" ${cityValue === 'quang nam' ? 'selected' : ''}>Quảng Nam</option>
+                        <option value="quang ngai" ${cityValue === 'quang ngai' ? 'selected' : ''}>Quảng Ngãi</option>
+                        <option value="quang ninh" ${cityValue === 'quang ninh' ? 'selected' : ''}>Quảng Ninh</option>
+                        <option value="quang tri" ${cityValue === 'quang tri' ? 'selected' : ''}>Quảng Trị</option>
+                        <option value="soc trang" ${cityValue === 'soc trang' ? 'selected' : ''}>Sóc Trăng</option>
+                        <option value="son la" ${cityValue === 'son la' ? 'selected' : ''}>Sơn La</option>
+                        <option value="tay ninh" ${cityValue === 'tay ninh' ? 'selected' : ''}>Tây Ninh</option>
+                        <option value="thai binh" ${cityValue === 'thai binh' ? 'selected' : ''}>Thái Bình</option>
+                        <option value="thai nguyen" ${cityValue === 'thai nguyen' ? 'selected' : ''}>Thái Nguyên</option>
+                        <option value="thanh hoa" ${cityValue === 'thanh hoa' ? 'selected' : ''}>Thanh Hóa</option>
+                        <option value="thua thien hue" ${cityValue === 'thua thien hue' ? 'selected' : ''}>Thừa Thiên Huế</option>
+                        <option value="tien giang" ${cityValue === 'tien giang' ? 'selected' : ''}>Tiền Giang</option>
+                        <option value="tra vinh" ${cityValue === 'tra vinh' ? 'selected' : ''}>Trà Vinh</option>
+                        <option value="tuyen quang" ${cityValue === 'tuyen quang' ? 'selected' : ''}>Tuyên Quang</option>
+                        <option value="vinh long" ${cityValue === 'vinh long' ? 'selected' : ''}>Vĩnh Long</option>
+                        <option value="vinh phuc" ${cityValue === 'vinh phuc' ? 'selected' : ''}>Vĩnh Phúc</option>
+                        <option value="yen bai" ${cityValue === 'yen bai' ? 'selected' : ''}>Yên Bái</option>
+                    </select>
+                    <div style="font-size: 0.75em; color: #888; margin-top: 5px;">
+                        Chọn tỉnh/thành phố Việt Nam
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="label">👶 Tuổi</div>
+                    <input type="number" id="ageInput" value="${ageValue}" placeholder="18-100" min="18" max="100" step="1">
+                    <div style="font-size: 0.75em; color: #888; margin-top: 5px;">
+                        Tuổi người giao dịch (18-100)
+                    </div>
+                </div>
             `;
 
-            // Enable fraud detection button
-            const amt = parseFloat(document.getElementById('amtInput').value);
-            const time = document.getElementById('timeInput').value;
-            
-            if (amt > 0 && validateTimeFormat(time)) {
-                fraudBtn.disabled = false;
-            } else {
-                fraudBtn.disabled = true;
-            }
+            // Enable fraud detection button if all required fields are valid
+            validateFraudButton();
 
             // Add input listeners to enable/disable button
             document.getElementById('amtInput').addEventListener('input', validateFraudButton);
             document.getElementById('timeInput').addEventListener('input', validateFraudButton);
+            document.getElementById('dayInput').addEventListener('change', validateFraudButton);
+            document.getElementById('cityInput').addEventListener('change', validateFraudButton);
+            document.getElementById('ageInput').addEventListener('input', validateFraudButton);
         }
 
         function validateTimeFormat(time) {
@@ -912,12 +1105,18 @@
         function validateFraudButton() {
             const amt = parseFloat(document.getElementById('amtInput')?.value || 0);
             const time = document.getElementById('timeInput')?.value || '';
+            const day = document.getElementById('dayInput')?.value || '';
+            const city = document.getElementById('cityInput')?.value || '';
+            const age = parseInt(document.getElementById('ageInput')?.value || 0);
             
-            if (amt > 0 && validateTimeFormat(time)) {
-                fraudBtn.disabled = false;
-            } else {
-                fraudBtn.disabled = true;
-            }
+            // Check all required fields
+            const isValid = amt > 0 && 
+                          validateTimeFormat(time) &&
+                          day !== '' &&
+                          city !== '' &&
+                          age >= 18 && age <= 100;
+            
+            fraudBtn.disabled = !isValid;
         }
 
         function showLoading() {
@@ -944,13 +1143,17 @@
             error.classList.remove('active');
         }
 
-        function showSuccess() {
+        function showSuccess(message) {
+            if (message) {
+                success.textContent = message;
+            }
             success.classList.add('active');
             setTimeout(() => hideSuccess(), 3000);
         }
 
         function hideSuccess() {
             success.classList.remove('active');
+            success.textContent = SUCCESS_TEXT_EXTRACT;
         }
 
         function showAiLoading() {
@@ -958,18 +1161,16 @@
             extractBtn.disabled = true;
         }
 
-        function hideAiLoading() {
-            aiLoading.classList.remove('active');
-            extractBtn.disabled = false;
-        }
-
-        // Fraud Detection - Gọi API mới /predict-fraud
+        // Fraud Detection - Gọi API mới /predict-fraud với 7 trường
         fraudBtn.addEventListener('click', async () => {
-            // Lấy dữ liệu từ form (4 tham số)
+            // Lấy dữ liệu từ form (7 tham số: 7 required)
             const amt = parseFloat(document.getElementById('amtInput')?.value || 0);
             const gender = document.getElementById('genderInput')?.value || null;
             const category = document.getElementById('categoryInput')?.value || 'khác';
             const transaction_time = document.getElementById('timeInput')?.value || '';
+            const transaction_day = parseInt(document.getElementById('dayInput')?.value || -1);
+            const city = document.getElementById('cityInput')?.value || '';
+            const age = parseInt(document.getElementById('ageInput')?.value || 18);
 
             // Validate
             if (amt <= 0) {
@@ -980,6 +1181,22 @@
                 showError('Thời gian không hợp lệ. Định dạng: HH:MM:SS (ví dụ: 13:05:02)');
                 return;
             }
+            if (transaction_day < 0 || transaction_day > 6) {
+                showError('Vui lòng chọn ngày trong tuần (0=Thứ 2, 6=Chủ nhật)');
+                return;
+            }
+            if (!city) {
+                showError('Vui lòng chọn tỉnh/thành phố');
+                return;
+            }
+            if (age < 18 || age > 100) {
+                showError('Tuổi phải từ 18-100');
+                return;
+            }
+
+            // Parse transaction_time to get hour
+            const timeParts = transaction_time.split(':');
+            const transaction_hour = parseInt(timeParts[0]);
 
             // Show loading
             fraudLoading.classList.add('active');
@@ -987,17 +1204,20 @@
             fraudResult.classList.remove('active');
 
             try {
-                // Gọi API mới: /api/model/predict-fraud
+                // Gọi API mới: /api/model/predict-fraud với 7 trường required
                 const response = await fetch('/api/model/predict-fraud', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        amt: amt,              // Số tiền (VND)
-                        gender: gender,        // Giới tính (Nam/Nữ)
-                        category: category,    // Loại giao dịch (Tiếng Việt)
-                        transaction_time: transaction_time  // Thời gian (HH:MM:SS)
+                        amt: amt,                           // Số tiền (VND)
+                        gender: gender,                     // Giới tính (Nam/Nữ)
+                        category: category,                 // Loại giao dịch (Tiếng Việt)
+                        transaction_hour: transaction_hour, // Giờ (0-23)
+                        transaction_day: transaction_day,   // Ngày (0-6)
+                        age: age,                          // Tuổi (18-100)
+                        city: city                         // Tỉnh/thành phố
                     })
                 });
 
@@ -1065,6 +1285,10 @@
             // Build input details HTML
             let inputDetailsHtml = '';
             if (input.amt_vnd) {
+                // Map transaction_day to Vietnamese day names
+                const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+                const dayName = input.transaction_day !== undefined ? dayNames[input.transaction_day] : 'N/A';
+
                 inputDetailsHtml = `
                     <div class="fraud-details" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.85em;">
                         <div style="font-weight: 600; margin-bottom: 8px; opacity: 0.9;">📊 Thông tin đã phân tích:</div>
@@ -1072,7 +1296,12 @@
                             <div>💰 Số tiền: ${input.amt_vnd?.toLocaleString()} VND → $${input.amt_usd?.toFixed(2)} USD</div>
                             <div>👤 Giới tính: ${input.gender || 'N/A'}</div>
                             <div>🏷️ Loại GD: ${input.category || 'N/A'}</div>
-                            <div>⏰ Thời gian: ${input.transaction_time || 'N/A'}</div>
+                            <div>⏰ Giờ giao dịch: ${input.transaction_hour !== undefined ? input.transaction_hour : 'N/A'}h</div>
+                            <div>📅 Ngày trong tuần: ${dayName}</div>
+                            <div>📆 Tháng: ${input.transaction_month || 'N/A'}</div>
+                            <div>🎂 Tuổi: ${input.age || 'N/A'}</div>
+                            <div>🏙️ Tỉnh/TP: ${input.city || 'N/A'}</div>
+                            <div>👥 Dân số: ${input.city_pop ? input.city_pop.toLocaleString() : 'N/A'}</div>
                         </div>
                     </div>
                 `;

@@ -22,87 +22,206 @@
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="@color/primary_text"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp"/>
 
-        <!-- Image Preview Card -->
-        <com.google.android.material.card.MaterialCardView
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chọn một chức năng để bắt đầu"
+            android:textSize="15sp"
+            android:textColor="@color/secondary_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Four feature cards -->
+        <GridLayout
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:layout_marginBottom="24dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp">
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:useDefaultMargins="true">
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAnalyze"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/card_blue"
+                android:clickable="true"
+                android:foreground="?android:attr/selectableItemBackground">
 
-                <ImageView
-                    android:id="@+id/imagePreview"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Transaction image preview"/>
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/textPlaceholder"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="No image selected\n\nTap button below to upload"
-                    android:textAlignment="center"
-                    android:textSize="16sp"
-                    android:textColor="#999"
-                    android:lineSpacingExtra="4dp"/>
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_camera"
+                        android:tint="@color/card_text_light" />
 
-            </FrameLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Phân tích giao dịch"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="8dp" />
 
-        </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chọn ảnh và phân tích ngay"
+                        android:textSize="12sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
 
-        <!-- Upload Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnUpload"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="📷 Chọn Ảnh"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp"
-            app:icon="@android:drawable/ic_menu_gallery"
-            app:iconGravity="textStart"
-            app:iconPadding="8dp"
-            android:layout_marginBottom="12dp"/>
+            </com.google.android.material.card.MaterialCardView>
 
-        <!-- Analyze Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAnalyze"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="🔍 Phân Tích Giao Dịch"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="12dp"
-            app:icon="@android:drawable/ic_menu_send"
-            app:iconGravity="textStart"
-            app:iconPadding="8dp"
-            android:layout_marginBottom="12dp"/>
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSimulate"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                app:cardElevation="2dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/card_green"
+                android:clickable="true"
+                android:foreground="?android:attr/selectableItemBackground">
 
-        <!-- View Results Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnViewResults"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="📋 Xem Kết Quả Trích Xuất"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="12dp"
-            app:icon="@android:drawable/ic_menu_info_details"
-            app:iconGravity="textStart"
-            app:iconPadding="8dp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginBottom="24dp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_media_play"
+                        android:tint="@color/card_text_light" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mô phỏng giao dịch"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mô phỏng nhanh"
+                        android:textSize="12sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSettings"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                app:cardElevation="2dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/card_orange"
+                android:clickable="true"
+                android:foreground="?android:attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_preferences"
+                        android:tint="@color/card_text_light" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cài đặt"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mở cài đặt"
+                        android:textSize="12sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardHistory"
+                android:layout_width="0dp"
+                android:layout_height="140dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                app:cardElevation="2dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/card_purple"
+                android:clickable="true"
+                android:foreground="?android:attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_recent_history"
+                        android:tint="@color/card_text_light" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lịch sử"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Xem lịch sử"
+                        android:textSize="12sp"
+                        android:textColor="@color/card_text_light"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </GridLayout>
 
         <!-- Progress Bar -->
         <ProgressBar
@@ -110,7 +229,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="12dp"/>
 
         <!-- Status Text -->
         <TextView

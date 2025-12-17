@@ -49,7 +49,7 @@ Fraud_creaditCart_detection_app/
 ## 🚀 Cài đặt & chạy Backend (Flask API)
 
 ### 1) Yêu cầu
-- Python 3.10+ (khuyến nghị)
+- Python 3.9 (khuyến nghị)
 - **Tesseract OCR** (bắt buộc vì dùng `pytesseract`)
   - Windows: cài “Tesseract-OCR” và đảm bảo `tesseract.exe` có trong `PATH`.
 

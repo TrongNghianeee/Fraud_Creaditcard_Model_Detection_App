@@ -1,191 +1,172 @@
-# Fraud Detection API
+# Fraud Detection (Flask API + Android App)
 
-API phát hiện gian lận thẻ tín dụng sử dụng Flask với kiến trúc Blueprints và Application Factory Pattern.
+Dự án gồm:
+- **Flask API** (localhost:5000) để OCR + AI parse thông tin giao dịch và dự đoán gian lận.
+- **Android app** (thư mục `mobile_app_1/`) để chọn ảnh giao dịch, tự động điền form, dự đoán và lưu **Lịch sử**.
 
-## 🏗️ Cấu trúc Project
+## ✅ Chức năng hiện tại
+
+### Backend (Flask)
+- `POST /api/preprocess/extract-and-parse`: Upload ảnh → OCR (Tesseract) → AI parse ra **7 trường**:
+  - `amt`, `gender`, `category`, `transaction_time`, `transaction_day`, `city`, `age`
+- `POST /api/model/predict-fraud`: Nhận dữ liệu giao dịch (7 trường + city_pop) → trả về `prediction` + `input` đã convert.
+- `GET /health`: Health check.
+- `GET /`: Trang test UI (static) để thử OCR/parse trên trình duyệt.
+
+### Android app
+- Home có 4 card chức năng (Phân tích ảnh / Mô phỏng / Cài đặt / Lịch sử) với UI cải thiện.
+- Chọn ảnh → gọi API OCR+AI → đổ dữ liệu vào form.
+- Bấm dự đoán → gọi API `predict-fraud`.
+- **Lịch sử**: lưu local (SQLite) mỗi lần dự đoán, hiển thị đỏ/xanh + % và xem chi tiết; có nút quay về Home.
+
+## 🏗️ Cấu trúc project
 
 ```
 Fraud_creaditCart_detection_app/
-│
 ├── app/
-│   ├── __init__.py                 # Application Factory
-│   ├── config.py                   # Configuration settings
-│   │
-│   └── blueprints/                 # Blueprints package
-│       ├── __init__.py
-│       │
-│       ├── model/                  # Model Blueprint
+│   ├── __init__.py                 # Application Factory + / + /health
+│   ├── config.py
+│   └── blueprints/
+│       ├── model/
 │       │   ├── __init__.py
-│       │   ├── routes.py           # Model API endpoints
-│       │   └── services.py         # Model business logic
-│       │
-│       ├── openai/                 # OpenAI Blueprint
+│       │   └── routes.py           # /api/model/predict-fraud
+│       ├── preprocess/
 │       │   ├── __init__.py
-│       │   ├── routes.py           # OpenAI API endpoints
-│       │   └── services.py         # OpenAI integration logic
-│       │
-│       └── preprocess/             # Preprocess Blueprint
-│           ├── __init__.py
-│           ├── routes.py           # Preprocessing endpoints
-│           └── services.py         # Preprocessing logic
-│
-├── models/                         # ML models (not committed to git)
-│   ├── fraud_detection_model.pkl
-│   └── scaler.pkl
-│
-├── .env                            # Environment variables (NOT in git)
-├── .env.example                    # Example environment file
-├── .gitignore                      # Git ignore rules
-├── requirements.txt                # Python dependencies
-├── run.py                          # Application entry point
-└── README.md                       # This file
+│       │   ├── routes.py           # /api/preprocess/extract-and-parse
+│       │   └── services.py         # OCRService
+│       └── openai/
+│           ├── __init__.py         # Blueprint (hiện chưa có routes)
+│           └── services.py         # OpenAIService.parse_transaction_text
+├── static/
+│   └── index.html                  # Trang test khi mở http://localhost:5000/
+├── models/                         # ML models (pkl)
+├── mobile_app_1/                   # Android project (Android Studio)
+├── .env.example
+├── requirements_core.txt
+└── run.py                          # Chạy server
 ```
 
-## 🚀 Cài đặt
+## 🚀 Cài đặt & chạy Backend (Flask API)
 
-### 1. Clone repository
+### 1) Yêu cầu
+- Python 3.10+ (khuyến nghị)
+- **Tesseract OCR** (bắt buộc vì dùng `pytesseract`)
+  - Windows: cài “Tesseract-OCR” và đảm bảo `tesseract.exe` có trong `PATH`.
 
-```bash
-cd Fraud_creaditCart_detection_app
+### 2) Tạo môi trường ảo + cài dependencies
+
+Windows PowerShell:
+
+```powershell
+cd C:\Users\Admin\Code\Fraud_creaditCart_detection_app
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements_core.txt
 ```
 
-### 2. Tạo virtual environment
+### 3) Cấu hình `.env`
 
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-### 3. Cài đặt dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Cấu hình environment variables
-
-Sao chép file `.env.example` thành `.env` và cập nhật các giá trị:
-
-```bash
+```powershell
 copy .env.example .env
 ```
 
-Chỉnh sửa file `.env`:
+Sửa `.env` (ít nhất cần `OPENAI_API_KEY` nếu muốn AI parse):
 
-```env
-SECRET_KEY=your-secret-key-here
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-3.5-turbo
-MODEL_PATH=models/fraud_detection_model.pkl
-SCALER_PATH=models/scaler.pkl
+```dotenv
+OPENAI_API_KEY=...
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_MODEL=anthropic/claude-3.5-sonnet
+
+HOST=0.0.0.0
+PORT=5000
 ```
 
-⚠️ **QUAN TRỌNG**: File `.env` chứa các API keys và không được đẩy lên GitHub.
+### 4) Chạy server
 
-### 5. Chạy application
-
-```bash
+```powershell
 python run.py
 ```
 
-Server sẽ chạy tại: `http://localhost:5000`
+Mở:
+- Test page: `http://localhost:5000/`
+- Health: `http://localhost:5000/health`
 
-## 📋 API Endpoints
+## 📋 API Endpoints (hiện có)
 
-### Health Check
-- `GET /health` - Kiểm tra trạng thái server
+### Health
+- `GET /health`
 
-### Model APIs (`/api/model`)
-- `POST /api/model/predict` - Dự đoán gian lận cho 1 giao dịch
-- `POST /api/model/batch-predict` - Dự đoán hàng loạt
-- `GET /api/model/model-info` - Thông tin về model
-- `POST /api/model/reload` - Tải lại model
+### OCR + AI parse
+- `POST /api/preprocess/extract-and-parse`
+  - `multipart/form-data`:
+    - `file`: ảnh giao dịch
+    - `language`: (optional) ví dụ `vie+eng`
+  - Response (khi OCR ok, AI parse ok):
+    - `success: true`, `ai_parsing_success: true`, `transaction: { amt, gender, category, transaction_time, transaction_day, city, age }`
+  - Nếu AI parse fail nhưng OCR ok:
+    - `success: true`, `ai_parsing_success: false`, có `ocr_text` để debug
 
-### OpenAI APIs (`/api/openai`)
-- `POST /api/openai/analyze-transaction` - Phân tích giao dịch bằng AI
-- `POST /api/openai/explain-prediction` - Giải thích kết quả dự đoán
-- `POST /api/openai/chat` - Chat về phát hiện gian lận
-- `POST /api/openai/generate-report` - Tạo báo cáo phân tích
+### Predict fraud
+- `POST /api/model/predict-fraud`
+  - JSON body:
+    - `amt` (VND), `gender` (Nam/Nữ), `category` (VN), `transaction_hour` (0-23), `transaction_day` (0-6), `age` (18-100), `city`, `city_pop` (optional)
 
-### Preprocess APIs (`/api/preprocess`)
-- `POST /api/preprocess/transaction-to-text` - Chuyển giao dịch thành text
-- `POST /api/preprocess/normalize-input` - Chuẩn hóa input
-- `POST /api/preprocess/extract-features` - Trích xuất features
-- `POST /api/preprocess/validate-input` - Validate dữ liệu đầu vào
-- `POST /api/preprocess/batch-preprocess` - Xử lý hàng loạt
+## 🧪 Test nhanh bằng localhost:5000
 
-## 📝 Ví dụ sử dụng
+### 1) Health
 
-### Dự đoán gian lận
-
-```bash
-curl -X POST http://localhost:5000/api/model/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transaction_data": {
-      "amount": 1500.00,
-      "merchant_id": "M123",
-      "customer_id": "C456"
-    }
-  }'
+```powershell
+Invoke-RestMethod http://localhost:5000/health
 ```
 
-### Phân tích bằng AI
+### 2) Predict fraud
 
-```bash
-curl -X POST http://localhost:5000/api/openai/analyze-transaction \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transaction_text": "Large purchase at unusual location",
-    "transaction_data": {"amount": 5000}
-  }'
+```powershell
+$body = @{
+  amt = 500000
+  gender = "Nam"
+  category = "xăng dầu"
+  transaction_hour = 13
+  transaction_day = 1
+  age = 28
+  city = "ha noi"
+  city_pop = 8054000
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post "http://localhost:5000/api/model/predict-fraud" -ContentType "application/json" -Body $body
 ```
 
-## 🔒 Bảo mật
+### 3) OCR + AI parse (upload ảnh)
 
-- File `.env` chứa API keys và **KHÔNG BAO GIỜ** được commit lên Git
-- Đã được thêm vào `.gitignore`
-- Sử dụng `.env.example` để hướng dẫn cấu hình
-- Thay đổi `SECRET_KEY` trong production
+Gợi ý nhanh nhất: mở `http://localhost:5000/` và upload ảnh trên web test page.
 
-## 🧪 Testing
+## 📱 Cài & chạy Android app (Android Studio)
 
-```bash
-pytest
-```
+### 1) Mở project
+- Mở **Android Studio** → **Open** → chọn thư mục: `mobile_app_1/`
+- Chờ **Gradle Sync** hoàn tất
 
-## 📦 Dependencies chính
+### 2) Cấu hình API base URL
 
-- **Flask**: Web framework
-- **Flask-CORS**: Cross-Origin Resource Sharing
-- **OpenAI**: AI integration
-- **NumPy, Pandas**: Data processing
-- **scikit-learn**: Machine learning
-- **python-dotenv**: Environment variables
+Android app gọi API qua Retrofit ở `mobile_app_1/app/src/main/java/com/example/mobile_app/ApiClient.java`.
 
-## 🛠️ Development
+Bạn có 3 lựa chọn:
 
-### Code formatting
+1) **Dùng ngrok (khuyến nghị khi chạy trên điện thoại thật)**
+   - Chạy backend ở port 5000
+   - Chạy: `ngrok http 5000`
+   - Copy URL ngrok và dán vào `BASE_URL` (phải có dấu `/` cuối).
 
-```bash
-black .
-```
+2) **Android Emulator + localhost**
+   - Set `BASE_URL = "http://10.0.2.2:5000/"` (10.0.2.2 là localhost của máy host trên emulator)
 
-### Linting
+3) **Điện thoại thật cùng Wi‑Fi với máy chạy backend**
+   - Set `BASE_URL = "http://<IP_MAY_TINH>:5000/"` (ví dụ `http://192.168.1.10:5000/`)
 
-```bash
-flake8
-```
+### 3) Run
+- Cắm điện thoại hoặc mở emulator
+- Bấm **Run ▶**
 
-## 📄 License
+## 🔒 Ghi chú bảo mật
+- Không commit `.env` lên GitHub (file chứa API key).
 
-MIT License
-
-## 👥 Contributors
-
-Your Name - Fraud Detection Team

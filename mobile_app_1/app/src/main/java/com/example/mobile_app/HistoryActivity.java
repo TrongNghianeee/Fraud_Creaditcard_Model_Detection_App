@@ -63,6 +63,10 @@ public class HistoryActivity extends AppCompatActivity {
         sb.append("Tuổi: ").append(item.age != null ? item.age : "-").append("\n");
         sb.append("Risk level: ").append(item.riskLevel != null ? item.riskLevel : "-");
 
+        if (item.isFraud && item.aiExplanation != null && !item.aiExplanation.trim().isEmpty()) {
+            sb.append("\n\nGiải thích (AI):\n").append(item.aiExplanation.trim());
+        }
+
         new AlertDialog.Builder(this)
                 .setTitle("Chi tiết giao dịch")
                 .setMessage(sb.toString())

@@ -279,12 +279,12 @@ public class FormActivity extends AppCompatActivity {
             intent.putExtra("ai_explanation_error", response.getAiExplanationError());
         }
 
-        saveHistory(prediction, input);
+        saveHistory(prediction, input, response.getAiExplanation());
 
         startActivity(intent);
     }
 
-    private void saveHistory(FraudPrediction prediction, FraudResponse.FraudInputData input) {
+    private void saveHistory(FraudPrediction prediction, FraudResponse.FraudInputData input, String aiExplanation) {
         if (prediction == null || input == null) return;
 
         String savedTransactionTime = input.getTransactionTime();
@@ -309,6 +309,10 @@ public class FormActivity extends AppCompatActivity {
         item.city = input.getCity();
         item.age = input.getAge();
         item.riskLevel = prediction.getRiskLevel();
+
+        if (item.isFraud && aiExplanation != null && !aiExplanation.trim().isEmpty()) {
+            item.aiExplanation = aiExplanation.trim();
+        }
 
         historyRepository.insert(item);
         Log.d(TAG, "Saved history item");

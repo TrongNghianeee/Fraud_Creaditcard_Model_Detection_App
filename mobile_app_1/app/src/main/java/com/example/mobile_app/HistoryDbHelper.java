@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class HistoryDbHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "fraud_history.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public static final String TABLE = "history";
     public static final String COL_ID = "id";
@@ -21,6 +21,7 @@ public class HistoryDbHelper extends SQLiteOpenHelper {
     public static final String COL_CITY = "city";
     public static final String COL_AGE = "age";
     public static final String COL_RISK_LEVEL = "risk_level";
+    public static final String COL_AI_EXPLANATION = "ai_explanation";
 
     public HistoryDbHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -40,13 +41,21 @@ public class HistoryDbHelper extends SQLiteOpenHelper {
                 COL_TX_DAY + " INTEGER, " +
                 COL_CITY + " TEXT, " +
                 COL_AGE + " INTEGER, " +
-                COL_RISK_LEVEL + " TEXT" +
+                COL_RISK_LEVEL + " TEXT, " +
+                COL_AI_EXPLANATION + " TEXT" +
                 ");";
         db.execSQL(sql);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Lightweight migration to preserve existing history.
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_AI_EXPLANATION + " TEXT");
+            return;
+        }
+
+        // Fallback for unexpected future versions
         db.execSQL("DROP TABLE IF EXISTS " + TABLE);
         onCreate(db);
     }

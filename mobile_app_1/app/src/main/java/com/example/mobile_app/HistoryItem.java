@@ -13,4 +13,6 @@ public class HistoryItem {
     public String city;
     public Integer age;
     public String riskLevel;
+    // Only stored when isFraud=true and backend returned AI explanation
+    public String aiExplanation;
 }

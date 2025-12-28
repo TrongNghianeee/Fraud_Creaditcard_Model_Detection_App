@@ -29,6 +29,7 @@ public class HistoryRepository {
         values.put(HistoryDbHelper.COL_CITY, item.city);
         values.put(HistoryDbHelper.COL_AGE, item.age);
         values.put(HistoryDbHelper.COL_RISK_LEVEL, item.riskLevel);
+        values.put(HistoryDbHelper.COL_AI_EXPLANATION, item.aiExplanation);
         db.insert(HistoryDbHelper.TABLE, null, values);
         db.close();
     }
@@ -57,6 +58,11 @@ public class HistoryRepository {
                     item.age = cursor.getInt(cursor.getColumnIndexOrThrow(HistoryDbHelper.COL_AGE));
                 }
                 item.riskLevel = cursor.getString(cursor.getColumnIndexOrThrow(HistoryDbHelper.COL_RISK_LEVEL));
+
+                int idxAi = cursor.getColumnIndex(HistoryDbHelper.COL_AI_EXPLANATION);
+                if (idxAi >= 0 && !cursor.isNull(idxAi)) {
+                    item.aiExplanation = cursor.getString(idxAi);
+                }
                 list.add(item);
             }
             cursor.close();

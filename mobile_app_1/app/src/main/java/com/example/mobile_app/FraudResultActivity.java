@@ -19,6 +19,8 @@ public class FraudResultActivity extends AppCompatActivity {
     private TextView tvRiskLevel;
     private TextView tvConvertedInfo;
     private TextView tvRecommendation;
+    private CardView cvAiExplanation;
+    private TextView tvAiExplanation;
     private Button btnBackToForm;
     
     private final DecimalFormat decimalFormat = new DecimalFormat("#,###");
@@ -41,6 +43,8 @@ public class FraudResultActivity extends AppCompatActivity {
         tvRiskLevel = findViewById(R.id.tvRiskLevel);
         tvConvertedInfo = findViewById(R.id.tvConvertedInfo);
         tvRecommendation = findViewById(R.id.tvRecommendation);
+        cvAiExplanation = findViewById(R.id.cvAiExplanation);
+        tvAiExplanation = findViewById(R.id.tvAiExplanation);
         btnBackToForm = findViewById(R.id.btnBackToForm);
     }
     
@@ -62,6 +66,10 @@ public class FraudResultActivity extends AppCompatActivity {
         int age = getIntent().getIntExtra("age", -1);
         String city = getIntent().getStringExtra("city");
         long cityPop = getIntent().getLongExtra("city_pop", 0L);
+
+        String aiExplanation = getIntent().getStringExtra("ai_explanation");
+        boolean aiExplanationSuccess = getIntent().getBooleanExtra("ai_explanation_success", true);
+        String aiExplanationError = getIntent().getStringExtra("ai_explanation_error");
         
         // Set fraud status with color coding
         if (isFraud) {
@@ -141,6 +149,24 @@ public class FraudResultActivity extends AppCompatActivity {
         }
         
         tvRecommendation.setText(recommendation);
+
+        // Show AI explanation only when fraud=true and explanation exists (or show error if attempted)
+        if (isFraud) {
+            if (aiExplanation != null && !aiExplanation.trim().isEmpty()) {
+                cvAiExplanation.setVisibility(android.view.View.VISIBLE);
+                tvAiExplanation.setText(aiExplanation);
+            } else if (!aiExplanationSuccess) {
+                cvAiExplanation.setVisibility(android.view.View.VISIBLE);
+                String msg = (aiExplanationError != null && !aiExplanationError.trim().isEmpty())
+                        ? ("Không thể tạo giải thích AI: " + aiExplanationError)
+                        : "Không thể tạo giải thích AI";
+                tvAiExplanation.setText(msg);
+            } else {
+                cvAiExplanation.setVisibility(android.view.View.GONE);
+            }
+        } else {
+            cvAiExplanation.setVisibility(android.view.View.GONE);
+        }
     }
     
     private void setupListeners() {

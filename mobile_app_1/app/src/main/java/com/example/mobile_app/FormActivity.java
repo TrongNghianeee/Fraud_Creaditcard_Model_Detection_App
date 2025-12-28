@@ -268,6 +268,17 @@ public class FormActivity extends AppCompatActivity {
             intent.putExtra("city_pop", input.getCityPop());
         }
 
+        // Optional AI explanation (backend only returns when is_fraud=true)
+        if (response.getAiExplanation() != null) {
+            intent.putExtra("ai_explanation", response.getAiExplanation());
+        }
+        if (response.getAiExplanationSuccess() != null) {
+            intent.putExtra("ai_explanation_success", response.getAiExplanationSuccess());
+        }
+        if (response.getAiExplanationError() != null) {
+            intent.putExtra("ai_explanation_error", response.getAiExplanationError());
+        }
+
         saveHistory(prediction, input);
 
         startActivity(intent);

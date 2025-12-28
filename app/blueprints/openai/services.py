@@ -399,9 +399,83 @@ Format your response as a structured analysis."""
             'analysis': analysis,
             'transaction_text': transaction_text
         }
+
+    @classmethod
+    def _filter_features_for_explanation(cls, transaction_data):
+        """Keep only allowed fields for fraud explanation (ignore amt_usd, transaction_month)."""
+        if not isinstance(transaction_data, dict):
+            return {}
+
+        allowlist = {
+            'amt_vnd',
+            'gender',
+            'category',
+            'transaction_hour',
+            'transaction_day',
+            'age',
+            'city',
+            'city_pop',
+            # Grounding evidence from the model (optional)
+            'model_top_factors'
+        }
+
+        filtered = {k: transaction_data.get(k) for k in allowlist if k in transaction_data}
+
+        # Sanitize model_top_factors so the LLM can map them back to user fields
+        if isinstance(filtered.get('model_top_factors'), list):
+            allowed_factor_fields = {
+                'amt_vnd',
+                'gender',
+                'category',
+                'transaction_hour',
+                'transaction_day',
+                'age',
+                'city_pop',
+            }
+            cleaned = []
+            for f in filtered['model_top_factors']:
+                if not isinstance(f, dict):
+                    continue
+                feat = str(f.get('feature', '')).strip()
+                if feat == 'amt':
+                    feat = 'amt_vnd'
+                if feat == 'transaction_month':
+                    continue
+                if feat not in allowed_factor_fields:
+                    continue
+                cleaned.append({
+                    'feature': feat,
+                    'feature_vi': f.get('feature_vi'),
+                    'raw_value': f.get('raw_value'),
+                    'contribution': f.get('contribution'),
+                    'direction': f.get('direction'),
+                })
+            filtered['model_top_factors'] = cleaned
+
+        # Normalize types when possible
+        try:
+            if 'amt_vnd' in filtered and filtered['amt_vnd'] is not None:
+                filtered['amt_vnd'] = float(filtered['amt_vnd'])
+        except Exception:
+            pass
+
+        for key in ('transaction_hour', 'transaction_day', 'age'):
+            try:
+                if key in filtered and filtered[key] is not None:
+                    filtered[key] = int(filtered[key])
+            except Exception:
+                pass
+
+        try:
+            if 'city_pop' in filtered and filtered['city_pop'] is not None:
+                filtered['city_pop'] = int(filtered['city_pop'])
+        except Exception:
+            pass
+
+        return filtered
     
     @classmethod
-    def explain_prediction(cls, prediction_result, transaction_data):
+    def explain_prediction(cls, prediction_result, transaction_data, explanation_detail: str = "full"):
         """
         Generate human-readable explanation for a model prediction
         
@@ -412,30 +486,81 @@ Format your response as a structured analysis."""
         Returns:
             str: Natural language explanation
         """
-        is_fraud = prediction_result.get('is_fraud', False)
+        is_fraud = bool(prediction_result.get('is_fraud', False))
         probability = prediction_result.get('fraud_probability', 0)
-        
-        prompt = f"""Explain the following fraud detection result to a non-technical user:
 
-Prediction: {'Fraudulent' if is_fraud else 'Legitimate'}
-Fraud Probability: {probability:.2%}
-Transaction Data: {transaction_data}
+        try:
+            probability = float(probability)
+        except Exception:
+            probability = 0.0
 
-Provide a clear, concise explanation of why this transaction was flagged or cleared, 
-highlighting the key factors that influenced the decision."""
-        
+        filtered = cls._filter_features_for_explanation(transaction_data)
+
+        detail = (explanation_detail or "full").strip().lower()
+        if detail not in ("short", "full"):
+            detail = "full"
+
+        system_prompt = (
+            "Bạn là trợ lý giải thích kết quả phát hiện gian lận thẻ tín dụng. "
+            "Bạn KHÔNG được giả vờ biết trọng số, feature importance hay logic nội bộ của mô hình. "
+            "Chỉ được suy luận hợp lý dựa trên (1) dữ liệu đầu vào được cung cấp và (2) kết quả dự đoán. "
+            "Nếu thiếu dữ liệu thì nói rõ là thiếu."
+        )
+
+        if detail == "short":
+            user_prompt = f"""Hãy giải thích NGẮN GỌN cho giao diện điện thoại.
+
+Kết quả mô hình:
+- is_fraud: {is_fraud}
+- fraud_probability: {probability:.4f}
+
+Chỉ dùng các trường input sau để giải thích (bỏ qua các trường khác như transaction_month, amt_usd):
+{json.dumps(filtered, ensure_ascii=False)}
+
+Nếu có trường `model_top_factors` thì đó là bằng chứng từ mô hình (đóng góp từng feature). Bạn PHẢI dựa vào nó để nêu nguyên nhân cụ thể (ví dụ: contribution dương => tăng rủi ro fraud).
+
+Yêu cầu trả lời (tối đa ~6 dòng):
+1) 1 câu tóm tắt.
+2) Lý do chính: đúng 2 bullet (mỗi bullet nêu rõ 1 field trong input). Nếu có contribution, chỉ nêu 1 con số lớn nhất.
+3) Khuyến nghị: đúng 2 bullet.
+
+Lưu ý:
+- Nếu is_fraud=false, giải thích ngắn gọn rằng không cần phân tích sâu.
+- Nếu is_fraud=true, tập trung nêu các yếu tố có thể làm tăng rủi ro dựa trên input."""
+
+            max_tokens = 220
+        else:
+            user_prompt = f"""Hãy giải thích cho người dùng không chuyên về kết quả phát hiện gian lận.
+
+Kết quả mô hình:
+- is_fraud: {is_fraud}
+- fraud_probability: {probability:.4f}
+
+Chỉ dùng các trường input sau để giải thích (bỏ qua các trường khác như transaction_month, amt_usd):
+{json.dumps(filtered, ensure_ascii=False)}
+
+Nếu có trường `model_top_factors` thì đó là bằng chứng từ mô hình (đóng góp từng feature). Bạn PHẢI dựa vào nó để nêu nguyên nhân cụ thể (ví dụ: contribution dương => tăng rủi ro fraud).
+
+Yêu cầu trả lời:
+1) Tóm tắt (1-2 câu)
+2) Nguyên nhân/động lực chính (bullet list):
+    - Ít nhất 3 bullet.
+    - Mỗi bullet bắt buộc nêu rõ 1 field cụ thể trong input (amt_vnd/transaction_hour/transaction_day/age/city/city_pop/gender/category).
+    - Nếu có `model_top_factors`, hãy ưu tiên các feature có |contribution| lớn và giải thích theo hướng: contribution dương => tăng rủi ro.
+3) Khuyến nghị (2-4 bullet)
+
+Lưu ý:
+- Nếu is_fraud=false, giải thích ngắn gọn rằng không cần phân tích sâu.
+- Nếu is_fraud=true, tập trung nêu các yếu tố có thể làm tăng rủi ro dựa trên input."""
+
+            max_tokens = 550
+
         messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful AI assistant explaining fraud detection results in simple terms."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
-        
-        return cls._get_completion(messages, temperature=0.5)
+
+        return cls._get_completion(messages, temperature=0.2, max_tokens=max_tokens)
     
     @classmethod
     def chat(cls, message, context=None):

@@ -1,7 +1,5 @@
-"""
-Application Factory Pattern
-"""
-from flask import Flask, send_from_directory, request
+"""Application Factory Pattern"""
+from flask import Flask, send_from_directory, request, make_response
 from flask_cors import CORS
 from app.config import Config
 import os
@@ -11,6 +9,9 @@ def create_app(config_class=Config):
     """Create and configure the Flask application"""
     app = Flask(__name__, static_folder='../static')
     app.config.from_object(config_class)
+
+    # Avoid stale frontend during local development (Ctrl+F5 shouldn't be required)
+    app.config.setdefault('SEND_FILE_MAX_AGE_DEFAULT', 0)
     
     # Enable CORS
     CORS(app)
@@ -60,7 +61,11 @@ def create_app(config_class=Config):
     @app.route('/')
     def index():
         """Serve the HTML test page"""
-        return send_from_directory(app.static_folder, 'index.html')
+        resp = make_response(send_from_directory(app.static_folder, 'index.html'))
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        resp.headers['Pragma'] = 'no-cache'
+        resp.headers['Expires'] = '0'
+        return resp
     
     @app.route('/health')
     def health_check():

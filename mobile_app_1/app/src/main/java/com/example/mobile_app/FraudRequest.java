@@ -32,6 +32,10 @@ public class FraudRequest {
     @SerializedName("city_pop")
     private final long cityPop;         // Dân số tỉnh/thành
 
+    // Controls how verbose the AI explanation should be ("short" for mobile)
+    @SerializedName("explanation_detail")
+    private final String explanationDetail;
+
     public FraudRequest(double amt, String gender, String category, int transactionHour, int transactionDay, int age, String city, long cityPop) {
         this.amt = amt;
         this.gender = gender;
@@ -41,6 +45,19 @@ public class FraudRequest {
         this.age = age;
         this.city = city;
         this.cityPop = cityPop;
+        this.explanationDetail = "short";
+    }
+
+    public FraudRequest(double amt, String gender, String category, int transactionHour, int transactionDay, int age, String city, long cityPop, String explanationDetail) {
+        this.amt = amt;
+        this.gender = gender;
+        this.category = category;
+        this.transactionHour = transactionHour;
+        this.transactionDay = transactionDay;
+        this.age = age;
+        this.city = city;
+        this.cityPop = cityPop;
+        this.explanationDetail = (explanationDetail == null || explanationDetail.trim().isEmpty()) ? "short" : explanationDetail;
     }
 
     public double getAmt() { return amt; }
@@ -51,4 +68,5 @@ public class FraudRequest {
     public int getAge() { return age; }
     public String getCity() { return city; }
     public long getCityPop() { return cityPop; }
+    public String getExplanationDetail() { return explanationDetail; }
 }

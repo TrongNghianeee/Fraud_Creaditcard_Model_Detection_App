@@ -4,7 +4,51 @@ Model routes - Fraud detection predictions using direct model
 from flask import request, jsonify, current_app
 from app.blueprints.model import model_bp
 from app.blueprints.model.fraud_detector import fraud_detector
+from app.blueprints.openai.services import OpenAIService
 import re
+import time
+import json
+import hashlib
+import threading
+
+
+# Simple in-memory caches (per-process) to avoid recomputing explanations for identical inputs.
+# NOTE: In multi-worker deployments (gunicorn/uwsgi), each worker has its own cache.
+_cache_lock = threading.Lock()
+_CONTRIB_CACHE = {}  # key -> (ts, factors)
+_AI_EXPL_CACHE = {}  # key -> (ts, explanation)
+
+_CACHE_TTL_SECONDS = 10 * 60  # 10 minutes
+_CACHE_MAX_ITEMS = 256
+
+
+def _cache_key_from_obj(obj) -> str:
+    blob = json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _cache_get(cache: dict, key: str):
+    now = time.time()
+    with _cache_lock:
+        item = cache.get(key)
+        if not item:
+            return None
+        ts, value = item
+        if now - ts > _CACHE_TTL_SECONDS:
+            cache.pop(key, None)
+            return None
+        return value
+
+
+def _cache_set(cache: dict, key: str, value):
+    now = time.time()
+    with _cache_lock:
+        cache[key] = (now, value)
+        if len(cache) > _CACHE_MAX_ITEMS:
+            # Evict oldest entries
+            oldest = sorted(cache.items(), key=lambda kv: kv[1][0])[: max(1, len(cache) - _CACHE_MAX_ITEMS)]
+            for k, _ in oldest:
+                cache.pop(k, None)
 
 
 @model_bp.route('/predict-fraud', methods=['POST'])
@@ -77,6 +121,7 @@ def predict_fraud():
         city = data['city']
         city_pop = data.get('city_pop')  # OPTIONAL - nếu app gửi thì dùng, không thì backend tự lookup
         transaction_month = data.get('transaction_month')  # Optional
+        explanation_detail = data.get('explanation_detail', 'full')  # Optional: short|full
         
         # Validate amt (Số tiền VND)
         try:
@@ -194,7 +239,7 @@ def predict_fraud():
         
         current_app.logger.info(f"[PREDICT-FRAUD] Result: is_fraud={result['is_fraud']}, probability={fraud_proba:.2f}")
         
-        return jsonify({
+        response_payload = {
             'success': True,
             'prediction': {
                 'is_fraud': result['is_fraud'],
@@ -215,7 +260,80 @@ def predict_fraud():
                 'city': converted['city'],
                 'city_pop': converted['city_pop']  # Return as integer, not formatted string
             }
-        }), 200
+        }
+
+        # Only call AI explanation when fraud=true
+        if result.get('is_fraud') is True:
+            try:
+                # Cache key based on normalized request inputs (not on derived fields)
+                contrib_key = _cache_key_from_obj({
+                    'amt': float(amt),
+                    'gender': gender,
+                    'category': category,
+                    'transaction_hour': int(transaction_hour),
+                    'transaction_day': int(transaction_day),
+                    'age': int(age),
+                    'city': city,
+                    'city_pop': int(city_pop) if city_pop is not None else None,
+                    'transaction_month': int(transaction_month) if transaction_month is not None else None,
+                })
+
+                factors_for_ai = _cache_get(_CONTRIB_CACHE, contrib_key)
+                if factors_for_ai is None:
+                    # Compute model-level contribution factors (no external AI) to ground the explanation
+                    model_explain = fraud_detector.explain_contributions(
+                        amt=amt,
+                        gender=gender,
+                        category=category,
+                        transaction_hour=transaction_hour,
+                        transaction_day=transaction_day,
+                        age=age,
+                        city=city,
+                        city_pop=city_pop,
+                        transaction_month=transaction_month,
+                        top_k=6
+                    )
+
+                    all_factors = model_explain.get('top_factors', []) or []
+                    user_factors = [f for f in all_factors if f.get('source') == 'user_input']
+                    factors_for_ai = user_factors if user_factors else all_factors
+                    _cache_set(_CONTRIB_CACHE, contrib_key, factors_for_ai)
+
+                # Cache AI explanation as it is typically the slowest step
+                ai_key = _cache_key_from_obj({
+                    'prediction': {
+                        'is_fraud': True,
+                        # rounding makes cache more stable while keeping meaning
+                        'fraud_probability': round(float(response_payload['prediction']['fraud_probability']), 6),
+                        'risk_level': response_payload['prediction']['risk_level'],
+                    },
+                    'input': response_payload['input'],
+                    'model_top_factors': factors_for_ai,
+                })
+
+                explanation = _cache_get(_AI_EXPL_CACHE, ai_key)
+                if explanation is None:
+                    explanation = OpenAIService.explain_prediction(
+                        prediction_result=response_payload['prediction'],
+                        transaction_data={
+                            **response_payload['input'],
+                            # Grounding evidence from the model
+                            'model_top_factors': factors_for_ai
+                        },
+                        explanation_detail=explanation_detail
+                    )
+                    _cache_set(_AI_EXPL_CACHE, ai_key, explanation)
+                response_payload['ai_explanation'] = explanation
+                response_payload['ai_explanation_success'] = True
+                # Optional: return factors for debugging/inspection (clients can ignore)
+                response_payload['model_top_factors'] = factors_for_ai
+            except Exception as ai_err:
+                current_app.logger.error(f"[PREDICT-FRAUD] AI explanation error: {str(ai_err)}")
+                response_payload['ai_explanation'] = None
+                response_payload['ai_explanation_success'] = False
+                response_payload['ai_explanation_error'] = str(ai_err)
+
+        return jsonify(response_payload), 200
         
     except Exception as e:
         current_app.logger.error(f"[PREDICT-FRAUD] Error: {str(e)}")

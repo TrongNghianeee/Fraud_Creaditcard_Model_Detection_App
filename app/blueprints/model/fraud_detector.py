@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import LabelEncoder
 import os
+import xgboost as xgb
+import re
 
 warnings.filterwarnings("ignore")
 
@@ -500,6 +502,139 @@ class FraudDetectorService:
         }
         
         return result
+
+    def explain_contributions(self, amt: float, gender: str, category: str,
+                              transaction_hour: int, transaction_day: int, age: int,
+                              city: str, city_pop: int = None, transaction_month: int = None,
+                              top_k: int = 6) -> Dict:
+        """Return per-feature contributions (SHAP-like) from XGBoost for this transaction.
+
+        Notes:
+        - Uses XGBoost's `pred_contribs=True` (TreeSHAP) on the final estimator.
+        - This reflects model behavior more faithfully than hand-written if/else rules.
+        - Contributions are on the model's internal feature space after preprocessing.
+        """
+        if city_pop is None:
+            city_pop = self.lookup_city_population(city)
+
+        X, converted = self.prepare_input_dataframe(
+            amt, gender, category, transaction_hour,
+            transaction_day, age, city, city_pop, transaction_month
+        )
+
+        pipeline = self._model
+        # Manually run deterministic preprocessing steps up to feature_selector
+        X1 = pipeline.named_steps['date_features'].transform(X)
+        X2 = pipeline.named_steps['missing_handler'].transform(X1)
+        X3 = pipeline.named_steps['categorical_encoder'].transform(X2)
+
+        base_feature_names = list(X3.columns) if isinstance(X3, pd.DataFrame) else None
+        raw_row = {}
+        try:
+            if isinstance(X3, pd.DataFrame) and len(X3.index) > 0:
+                raw_row = X3.iloc[0].to_dict()
+        except Exception:
+            raw_row = {}
+
+        X4 = pipeline.named_steps['scaler'].transform(X3)
+        X5 = pipeline.named_steps['feature_selector'].transform(X4)
+
+        selector = pipeline.named_steps['feature_selector']
+        feature_names = None
+
+        def _translate_feature_tokens(tokens, base_names):
+            if not tokens or not base_names:
+                return tokens
+            translated = []
+            for tok in tokens:
+                tok_str = str(tok)
+                m = re.match(r'^feature_(\d+)$', tok_str)
+                if m:
+                    idx = int(m.group(1))
+                    if 0 <= idx < len(base_names):
+                        translated.append(base_names[idx])
+                        continue
+                translated.append(tok_str)
+            return translated
+
+        # Prefer names from selector (training-time feature selection)
+        selected = getattr(selector, 'selected_features_', None)
+        if isinstance(selected, (list, tuple)) and len(selected) == getattr(X5, 'shape', [0, 0])[1]:
+            selected_list = [str(s) for s in selected]
+            # Many trained pipelines store placeholder names feature_0..feature_n
+            feature_names = _translate_feature_tokens(selected_list, base_feature_names)
+
+        # If selector didn't select, use the pre-scaler DataFrame column names
+        if feature_names is None and base_feature_names is not None:
+            try:
+                if getattr(X5, 'shape', [0, 0])[1] == len(base_feature_names):
+                    feature_names = list(base_feature_names)
+            except Exception:
+                pass
+
+        # If output is a DataFrame, its columns are authoritative
+        if isinstance(X5, pd.DataFrame):
+            feature_names = list(X5.columns)
+
+        if not feature_names:
+            feature_names = [f'feature_{i}' for i in range(int(X5.shape[1]))]
+
+        clf = pipeline.named_steps['classifier']
+        booster = clf.get_booster()
+
+        X5_values = X5.values if isinstance(X5, pd.DataFrame) else X5
+        dmat = xgb.DMatrix(X5_values, feature_names=list(feature_names))
+        contribs = booster.predict(dmat, pred_contribs=True)
+        # contribs shape: (n_samples, n_features + 1), last column is bias
+        row = contribs[0]
+        bias = float(row[-1])
+        row = row[:-1]
+
+        # Also fetch processed values (post-scaler/selector) for reference
+        try:
+            values = X5_values[0].tolist()
+        except Exception:
+            values = [None] * len(row)
+
+        feature_vi = {
+            'amt': 'Số tiền (USD nội bộ mô hình)',
+            'gender': 'Giới tính (mã hóa)',
+            'category': 'Loại giao dịch (mã hóa)',
+            'transaction_hour': 'Giờ giao dịch',
+            'transaction_day': 'Ngày trong tuần',
+            'transaction_month': 'Tháng giao dịch',
+            'age': 'Tuổi',
+            'city_pop': 'Dân số tỉnh/thành',
+        }
+
+        user_input_features = {
+            'amt', 'gender', 'category', 'transaction_hour', 'transaction_day',
+            'transaction_month', 'age', 'city_pop'
+        }
+
+        items = []
+        for name, value, c in zip(feature_names, values, row):
+            c = float(c)
+            name_str = str(name)
+            items.append({
+                'feature': name_str,
+                'feature_vi': feature_vi.get(name_str),
+                'raw_value': raw_row.get(name_str),
+                'source': 'user_input' if name_str in user_input_features else 'default_or_derived',
+                'value': value,
+                'contribution': c,
+                'direction': 'increase_fraud_risk' if c > 0 else 'decrease_fraud_risk'
+            })
+
+        items.sort(key=lambda it: abs(it['contribution']), reverse=True)
+        top_items = items[: max(1, int(top_k))]
+
+        return {
+            'top_factors': top_items,
+            'bias': bias,
+            'note': 'Computed via XGBoost pred_contribs (TreeSHAP-like) on the trained model',
+            'input_converted': converted
+        }
 
 
 # Singleton instance

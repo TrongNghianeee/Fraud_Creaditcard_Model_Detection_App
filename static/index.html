@@ -1282,6 +1282,28 @@
                     break;
             }
 
+            // AI explanation (only returned when is_fraud=true)
+            let explanationHtml = '';
+            if (prediction.is_fraud) {
+                if (data.ai_explanation) {
+                    const safeText = escapeHtml(data.ai_explanation).replace(/\n/g, '<br>');
+                    explanationHtml = `
+                        <div class="fraud-details" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.9em;">
+                            <div style="font-weight: 600; margin-bottom: 8px; opacity: 0.9;">🧠 Giải thích (AI)</div>
+                            <div style="opacity: 0.9; line-height: 1.4;">${safeText}</div>
+                        </div>
+                    `;
+                } else if (data.ai_explanation_success === false) {
+                    const errText = escapeHtml(data.ai_explanation_error || 'Không thể tạo giải thích AI');
+                    explanationHtml = `
+                        <div class="fraud-details" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.9em;">
+                            <div style="font-weight: 600; margin-bottom: 8px; opacity: 0.9;">🧠 Giải thích (AI)</div>
+                            <div style="opacity: 0.85;">⚠️ ${errText}</div>
+                        </div>
+                    `;
+                }
+            }
+
             // Build input details HTML
             let inputDetailsHtml = '';
             if (input.amt_vnd) {
@@ -1327,6 +1349,8 @@
                     <strong>Khuyến nghị:</strong><br>
                     ${recommendation}
                 </div>
+
+                ${explanationHtml}
 
                 ${inputDetailsHtml}
             `;

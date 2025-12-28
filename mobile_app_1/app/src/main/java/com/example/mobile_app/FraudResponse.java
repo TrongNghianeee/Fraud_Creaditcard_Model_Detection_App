@@ -19,6 +19,15 @@ public class FraudResponse {
     @SerializedName("input")
     private FraudInputData input;  // Converted input data
 
+    @SerializedName("ai_explanation")
+    private String aiExplanation;
+
+    @SerializedName("ai_explanation_success")
+    private Boolean aiExplanationSuccess;
+
+    @SerializedName("ai_explanation_error")
+    private String aiExplanationError;
+
     public boolean isSuccess() {
         return success;
     }
@@ -33,6 +42,18 @@ public class FraudResponse {
 
     public FraudInputData getInput() {
         return input;
+    }
+
+    public String getAiExplanation() {
+        return aiExplanation;
+    }
+
+    public Boolean getAiExplanationSuccess() {
+        return aiExplanationSuccess;
+    }
+
+    public String getAiExplanationError() {
+        return aiExplanationError;
     }
 
     /**
